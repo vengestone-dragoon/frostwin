@@ -25,4 +25,4 @@ I wrote most of this code durring Christmas break 2025, and will be going back t
 Feel free to make changes and submit pull requests. I may get a chance to look over the changes...
 
 ### x-win ###
-For my task view to work,Ii used the x-win crate to get the active applications icons, but due to what i guess is a bug in the code of x-win, my usage wasn't working until i changed one line in x-win's code. now it works flawlessly in Frostwin! Because I am uncertain if this was a bug or just a specific uscase issue, I have included my modified code and not submitted a bug report.
+For my task view to work, I used the x-win crate to get the active applications icons, but due to what i guess is a bug in the code of x-win, my usage wasn't working until i changed one line in x-win's code. now it works flawlessly in Frostwin! Because I am uncertain if this was a bug or just a specific uscase issue, I have included my modified code and not submitted a bug report.
