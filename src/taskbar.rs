@@ -55,48 +55,60 @@ impl Taskbar {
             TaskbarMessage::Init => {
                 Task::batch([
                     window::run(self.id, |window| {
-                        let raw_handle = window.window_handle().unwrap().as_raw();
-                        match raw_handle {
-                            window::raw_window_handle::RawWindowHandle::Win32(handle) => {
-                                let win_handle:HWND = HWND{ 0: handle.hwnd.get() as *mut c_void };
-                                let mut abd = APPBARDATA {
-                                    cbSize: size_of::<APPBARDATA>() as u32,
-                                    hWnd: win_handle,
-                                    uCallbackMessage: 0, // Define a custom message ID if you want callbacks
-                                    uEdge: ABE_TOP, // Dock to top
-                                    ..Default::default()
-                                };
-                                unsafe {
-                                    SHAppBarMessage(ABM_NEW, &mut abd);
+                        match window.window_handle() {
+                            Ok(window_handle) => {
+                                let raw_handle = window_handle.as_raw();
+                                match raw_handle {
+                                    window::raw_window_handle::RawWindowHandle::Win32(handle) => {
+                                        let win_handle:HWND = HWND{ 0: handle.hwnd.get() as *mut c_void };
+                                        let mut abd = APPBARDATA {
+                                            cbSize: size_of::<APPBARDATA>() as u32,
+                                            hWnd: win_handle,
+                                            uCallbackMessage: 0, // Define a custom message ID if you want callbacks
+                                            uEdge: ABE_TOP, // Dock to top
+                                            ..Default::default()
+                                        };
+                                        unsafe {
+                                            SHAppBarMessage(ABM_NEW, &mut abd);
 
-                                    // 2. Query for position
-                                    // Define the ideal coordinates (entire width of screen, specific height)
-                                    let screen_width = GetSystemMetrics(SM_CXSCREEN);
-                                    let base_size = screen_width as f32 * 0.0005;
-                                    abd.rc = RECT {
-                                        left: 0,
-                                        top: 0,
-                                        right: screen_width,
-                                        bottom: (50.0 * base_size) as i32,
-                                    };
+                                            // 2. Query for position
+                                            // Define the ideal coordinates (entire width of screen, specific height)
+                                            let screen_width = GetSystemMetrics(SM_CXSCREEN);
+                                            let base_size = screen_width as f32 * 0.0005;
+                                            abd.rc = RECT {
+                                                left: 0,
+                                                top: 0,
+                                                right: screen_width,
+                                                bottom: (50.0 * base_size) as i32,
+                                            };
 
-                                    // Ask the system if this space is available
-                                    SHAppBarMessage(ABM_QUERYPOS, &mut abd);
+                                            // Ask the system if this space is available
+                                            SHAppBarMessage(ABM_QUERYPOS, &mut abd);
 
-                                    // 3. Set the position
-                                    // After QUERYPOS, the system might have modified abd.rc to fit.
-                                    // Now we tell the system we are officially claiming it.
-                                    SHAppBarMessage(ABM_SETPOS, &mut abd);
+                                            // 3. Set the position
+                                            // After QUERYPOS, the system might have modified abd.rc to fit.
+                                            // Now we tell the system we are officially claiming it.
+                                            SHAppBarMessage(ABM_SETPOS, &mut abd);
 
-                                    SetWindowPos(
-                                        win_handle,
-                                        Some(HWND_NOTOPMOST),
-                                        0, 0, 0, 0,
-                                        SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE
-                                    ).unwrap();
+                                            match SetWindowPos(
+                                                win_handle,
+                                                Some(HWND_NOTOPMOST),
+                                                0, 0, 0, 0,
+                                                SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE
+                                            ) {
+                                                Err(e) => {
+                                                    eprintln!("Error setting taskbar position at system level: {}", e);
+                                                }
+                                                _ => {}
+                                            };
+                                        }
+                                    }
+                                    _ => {}
                                 }
                             }
-                            _ => {}
+                            Err(e) => {
+                                eprintln!("Error getting window handle for taskbar: {}", e);
+                            }
                         }
                         Message::None
                     }),
