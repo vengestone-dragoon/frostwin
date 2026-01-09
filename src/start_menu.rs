@@ -43,22 +43,38 @@ impl StartMenuSettings {
     }
 }
 
-fn get_dir_contents(path: PathBuf, target: &mut BTreeMap<String, StartItem>) {
-    for item in path.read_dir().unwrap() {
-        if let Ok(item) = item {
-            if item.path().is_file() {
-                if item.path().extension().unwrap() != "ini" {
-                    let new_item = StartItem::new(item.path());
-                    let name = new_item.name.clone();
-                    target.insert(name, new_item);
+fn get_dir_contents(path: PathBuf, target: &mut BTreeMap<String, StartItem>) -> std::io::Result<()> {
+    for entry in std::fs::read_dir(path)? {
+        match entry {
+            Ok(entry) => {
+                let path = entry.path();
+
+                if path.is_file() {
+                    let is_ini = path.extension()
+                        .map(|ext| ext == "ini")
+                        .unwrap_or(false);
+
+                    if is_ini {
+                        continue;
+                    }
                 }
-            } else {
-                let new_item = StartItem::new(item.path());
-                let name = new_item.name.clone();
-                target.insert(name, new_item);
+
+                match StartItem::new(path) {
+                    Ok(start_item) => {
+                        target.insert(start_item.name.clone(), start_item);
+                    }
+                    Err(e) => {
+                        eprintln!("Error getting start item: {}", e);
+                    }
+                };
+            }
+            Err(e) => {
+                eprintln!("Error getting dir entry: {}", e);
             }
         }
-    };
+    }
+
+    Ok(())
 }
 
 pub struct StartMenu {
@@ -97,54 +113,66 @@ impl StartMenu {
             StartMessage::Init(app_image_cache) => {
                 let mut content: BTreeMap<String, StartItem> = BTreeMap::new();
                 let system_programs_path = PathBuf::from(r"C:\ProgramData\Microsoft\Windows\Start Menu\Programs\");
-                let user_programs_path = data_dir().unwrap().join(r"Microsoft\Windows\Start Menu\Programs\");
-                let start_settings_file = data_dir().unwrap().join(r"Frostwin\Start_Settings.json");
-                if start_settings_file.exists() {
-                    match std::fs::read_to_string(start_settings_file.clone()) {
-                        Ok(content) => {
-                            match from_str::<StartMenuSettings>(&content) {
-                                Ok(settings) => {
-                                    self.settings = settings;
-                                }
-                                Err(e) => {
-                                    println!("Error loading start menu settings: {:?}", e);
+                match data_dir() {
+                    Some(data_dir) => {
+                        let user_programs_path = data_dir.join(r"Microsoft\Windows\Start Menu\Programs\");
+                        let start_settings_file = data_dir.join(r"Frostwin\Start_Settings.json");
+                        match std::fs::read_to_string(start_settings_file.clone()) {
+                            Ok(content) => {
+                                match from_str::<StartMenuSettings>(&content) {
+                                    Ok(settings) => {
+                                        self.settings = settings;
+                                    }
+                                    Err(e) => {
+                                        println!("Error loading start menu settings: {:?}", e);
+                                    }
                                 }
                             }
-                        }
-                        Err(e) => {
-                            println!("Error opening start menu settings: {:?}", e);
-                            match e.kind() {
-                                std::io::ErrorKind::NotFound => {
-                                    // Ensure the folder exists before creating the file
-                                    if let Some(parent) = start_settings_file.parent() {
-                                        let _ = std::fs::create_dir_all(parent);
+                            Err(e) => {
+                                println!("Error opening start menu settings: {:?}", e);
+                                match e.kind() {
+                                    std::io::ErrorKind::NotFound => {
+                                        // Ensure the folder exists before creating the file
+                                        if let Some(parent) = start_settings_file.parent() {
+                                            let _ = std::fs::create_dir_all(parent);
+                                        }
+                                        let _ = std::fs::write(&start_settings_file, "{}");
                                     }
-                                    let _ = std::fs::write(&start_settings_file, "{}");
-                                }
 
-                                std::io::ErrorKind::PermissionDenied => {
-                                    eprintln!("Permission denied. Attempting to fix file attributes...");
-                                    if let Ok(metadata) = std::fs::metadata(&start_settings_file) {
-                                        let mut perms = metadata.permissions();
-                                        if perms.readonly() {
-                                            perms.set_readonly(false);
-                                            // If we can fix permissions, try to write a fresh file
-                                            if std::fs::set_permissions(&start_settings_file, perms).is_ok() {
-                                                let _ = std::fs::write(&start_settings_file, "{}");
+                                    std::io::ErrorKind::PermissionDenied => {
+                                        eprintln!("Permission denied. Attempting to fix file attributes...");
+                                        if let Ok(metadata) = std::fs::metadata(&start_settings_file) {
+                                            let mut perms = metadata.permissions();
+                                            if perms.readonly() {
+                                                perms.set_readonly(false);
+                                                // If we can fix permissions, try to write a fresh file
+                                                if std::fs::set_permissions(&start_settings_file, perms).is_ok() {
+                                                    let _ = std::fs::write(&start_settings_file, "{}");
+                                                }
                                             }
                                         }
                                     }
-                                }
 
-                                _ => eprintln!("Critical I/O error: {}", e),
+                                    _ => eprintln!("Critical I/O error: {}", e),
+                                }
                             }
                         }
+                        match get_dir_contents(user_programs_path, &mut content) {
+                            Err(e) => {
+                                eprintln!("Error loading user start programs: {:?}", e);
+                            }
+                            _ => {}
+                        };
+                        match get_dir_contents(system_programs_path, &mut content) {
+                            Err(e) => {
+                                eprintln!("Error loading system start programs: {:?}", e);
+                            }
+                            _ => {}
+                        };
                     }
-                } else {
-                    std::fs::write(&start_settings_file, "").unwrap();
+                    None => {}
                 }
-                get_dir_contents(user_programs_path, &mut content);
-                get_dir_contents(system_programs_path, &mut content);
+
                 self.content = content;
                 let mut keys: Vec<String> = self.content.keys().cloned().collect();
                 alphanumeric_sort::sort_str_slice(&mut keys);
@@ -167,43 +195,84 @@ impl StartMenu {
             }
             StartMessage::ItemMessage(message) => {
                 match message {
-                    StartItemMessage::Toggle(path) => {
-                        let mut path = path.clone();
-                        if path.len() > 0 {
-                            let sub_dir = path.pop().unwrap();
-                            self.content.get_mut(&sub_dir).unwrap().update(StartItemMessage::Toggle(path));
-                        };
+                    StartItemMessage::Toggle(mut path) => {
+                        if let Some(sub_dir) = path.pop() {
+                            if let Some(item) = self.content.get_mut(&sub_dir) {
+                                item.update(StartItemMessage::Toggle(path));
+                            } else {
+                                eprintln!("Error: Directory key '{}' not found in content.", sub_dir);
+                            }
+                        }
                         Task::none()
                     }
+
                     StartItemMessage::Launch(path) => {
-                        Command::new("explorer").args([path]).spawn().unwrap();
-                        Task::done(Message::WindowClose(self.id))
+                        match Command::new("explorer").args([&path]).spawn() {
+                            Ok(_) => {
+                                Task::done(Message::WindowClose(self.id))
+                            }
+                            Err(e) => {
+                                eprintln!("Failed to launch explorer for path {}: {}", path.to_string_lossy(), e);
+                                Task::none()
+                            }
+                        }
                     }
                 }
-
             },
             StartMessage::SwitchToTab(tab) => {
                 self.tab = tab;
                 Task::none()
             },
             StartMessage::PinToTiles(path) => {
-                let start_settings_file = data_dir().unwrap().join(r"Frostwin\Start_Settings.json");
-                self.settings.tiles.push(path);
-                let settings = to_string_pretty(&self.settings).unwrap();
-                std::fs::write(&start_settings_file, settings).unwrap();
+                match data_dir() {
+                    Some(data_dir) => {
+                        let start_settings_file = data_dir.join(r"Frostwin\Start_Settings.json");
+                        self.settings.tiles.push(path);
+                        match to_string_pretty(&self.settings) {
+                            Ok(settings) => {
+                                match std::fs::write(&start_settings_file, settings) {
+                                    Err(e) => {
+                                        eprintln!("Error writing start menu settings: {:?}", e);
+                                    }
+                                    _ => {}
+                                };
+                            }
+                            Err(e) => {
+                                eprintln!("Error serializing start menu settings: {:?}", e);
+                            }
+                        };
+                    }
+                    None => {}
+                }
                 Task::none()
             }
             StartMessage::UnpinFromTiles(path) => {
-                let start_settings_file = data_dir().unwrap().join(r"Frostwin\Start_Settings.json");
-                let mut new_tiles_list: Vec<PathBuf> = Vec::new();
-                for old_path in self.settings.tiles.iter() {
-                    if *old_path != path {
-                        new_tiles_list.push(old_path.clone());
+                match data_dir() {
+                    Some(data_dir) => {
+                        let start_settings_file = data_dir.join(r"Frostwin\Start_Settings.json");
+                        let mut new_tiles_list: Vec<PathBuf> = Vec::new();
+                        for old_path in self.settings.tiles.iter() {
+                            if *old_path != path {
+                                new_tiles_list.push(old_path.clone());
+                            }
+                        }
+                        self.settings.tiles = new_tiles_list;
+                        match to_string_pretty(&self.settings) {
+                            Ok(settings) => {
+                                match std::fs::write(&start_settings_file, settings) {
+                                    Err(e) => {
+                                        eprintln!("Error writing start menu settings: {:?}", e);
+                                    }
+                                    _ => {}
+                                };
+                            }
+                            Err(e) => {
+                                eprintln!("Error serializing start menu settings: {:?}", e);
+                            }
+                        };
                     }
+                    None => {}
                 }
-                self.settings.tiles = new_tiles_list;
-                let settings = to_string_pretty(&self.settings).unwrap();
-                std::fs::write(&start_settings_file, settings).unwrap();
                 Task::none()
             }
         }
@@ -218,35 +287,56 @@ impl StartMenu {
                 header = text!("Tiles").size(text_height * 1.3);
                 let mut tiles_grid: Grid<Message> = Grid::new();
                 for path in self.settings.tiles.iter() {
-                    let app_image_lock = app_image_cache.lock().unwrap();
-                    let icon: Element<'_,Message> = if app_image_lock.contains_key(path) {
-                        image(app_image_lock.get(path).unwrap()).height(Length::Fixed(text_height * 2.0)).width(Length::Fixed(text_height * 2.0)).content_fit(ContentFit::Fill).into()
-                    } else {
-                        canvas(EmptyApp {id: format!("Tiles,{}",path.to_string_lossy()), cache: icon_cache.clone()}).height(Length::Fixed(text_height * 2.0)).width(Length::Fixed(text_height * 2.0)).into()
-                    };
-                    let name = path.file_stem().unwrap().to_str().unwrap().to_string();
-                    let tile_button: Button<Message> = Button::new(
-                        column![
-                            icon,
-                            text!("{}",name).size(text_height * 0.5).align_x(Alignment::Center).wrapping(Wrapping::WordOrGlyph)
-                        ].align_x(Alignment::Center)
-                            .width(Length::Fill)
-                            .height(Length::Fill)
-                            .spacing(0.0)
-                            .padding(spacing)
-                    ).style(transparent_button)
-                    .on_press(Message::StartMenu(StartMessage::ItemMessage(StartItemMessage::Launch(path.clone()))));
-                    let context_menu = ContextMenu::new(
-                        tile_button,
-                        || {
-                            container(
+                    match app_image_cache.lock() {
+                        Ok(app_image_lock) => {
+                            let icon: Element<'_,Message> = if app_image_lock.contains_key(path) {
+                                if let Some(app_image) = app_image_lock.get(path) {
+                                    image(app_image).height(Length::Fixed(text_height * 2.0)).width(Length::Fixed(text_height * 2.0)).content_fit(ContentFit::Fill).into()
+                                } else {
+                                    eprintln!("Error getting app_image");
+                                    canvas(EmptyApp {id: format!("Tiles,{}",path.to_string_lossy()), cache: icon_cache.clone()}).height(Length::Fixed(text_height * 2.0)).width(Length::Fixed(text_height * 2.0)).into()
+                                }
+                            } else {
+                                canvas(EmptyApp {id: format!("Tiles,{}",path.to_string_lossy()), cache: icon_cache.clone()}).height(Length::Fixed(text_height * 2.0)).width(Length::Fixed(text_height * 2.0)).into()
+                            };
+                            let name = if let Some(app_name) = path.file_stem() {
+                                if let Some(app_name_str) = app_name.to_str() {
+                                    app_name_str.to_string()
+                                } else {
+                                    eprintln!("Error: faild to get App name into str");
+                                    "".to_string()
+                                }
+                            } else {
+                                eprintln!("Error: failed to get App name from OsStr");
+                                "".to_string()
+                            };
+                            let tile_button: Button<Message> = Button::new(
                                 column![
-                                button(text!("Unpin")).style(context_menu_button).on_press(Message::StartMenu(StartMessage::UnpinFromTiles(path.clone()))),
-                            ]
-                            ).style(container::bordered_box).into()
+                                    icon,
+                                    text!("{}",name).size(text_height * 0.5).align_x(Alignment::Center).wrapping(Wrapping::WordOrGlyph)
+                                ].align_x(Alignment::Center)
+                                    .width(Length::Fill)
+                                    .height(Length::Fill)
+                                    .spacing(0.0)
+                                    .padding(spacing)
+                            ).style(transparent_button)
+                            .on_press(Message::StartMenu(StartMessage::ItemMessage(StartItemMessage::Launch(path.clone()))));
+                            let context_menu = ContextMenu::new(
+                                tile_button,
+                                || {
+                                    container(
+                                        column![
+                                            button(text!("Unpin")).style(context_menu_button).on_press(Message::StartMenu(StartMessage::UnpinFromTiles(path.clone()))),
+                                        ]
+                                    ).style(container::bordered_box).into()
+                                }
+                            );
+                            tiles_grid = tiles_grid.push(context_menu);
                         }
-                    );
-                    tiles_grid = tiles_grid.push(context_menu);
+                        Err(e) => {
+                            eprintln!("Error getting app_image lock: {:?}", e);
+                        }
+                    }
                 }
                 tab_content = tab_content.push(tiles_grid.spacing(spacing));
             },
@@ -255,7 +345,9 @@ impl StartMenu {
                 for key in self.sorted.iter() {
                     let mut path: Vec<String> = Vec::new();
                     path.push(key.clone());
-                    tab_content = tab_content.push(self.content.get(key).unwrap().view(icon_cache.clone(),app_image_cache.clone(),base_size.clone(), path))
+                    if let Some(item) = self.content.get(key) {
+                        tab_content = tab_content.push(item.view(icon_cache.clone(),app_image_cache.clone(),base_size.clone(), path))
+                    }
                 }
             }
         };
@@ -337,22 +429,33 @@ struct StartItem {
 }
 
 impl StartItem {
-    pub fn new(path: PathBuf) -> Self {
-        let mut name = path.file_name().unwrap().to_str().unwrap().to_string();
-        let mut content: Option<BTreeMap<String,Self>> = None;
-        if path.is_dir() {
-            let mut new_content: BTreeMap<String,Self> = BTreeMap::new();
-            get_dir_contents(path.clone(),&mut new_content);
-            content = Some(new_content);
-        } else if path.is_file() && path.extension().unwrap() == "lnk" {
-            name = path.file_stem().unwrap().to_str().unwrap().to_string();
-        }
-        Self {
-            name,
-            content,
-            sorted: None,
-            path,
-            open: false,
+    pub fn new(path: PathBuf) -> Result<Self,String> {
+        if let Some(file_name) = path.file_name() && let Some(name) = file_name.to_str() {
+            let mut name = name.to_string();
+            let mut content: Option<BTreeMap<String,Self>> = None;
+            if path.is_dir() {
+                let mut new_content: BTreeMap<String,Self> = BTreeMap::new();
+                match get_dir_contents(path.clone(),&mut new_content) {
+                    Err(e) => {
+                        return Err(format!("Error getting directory contents: {}", e));
+                    }
+                    _ => {}
+                };
+                content = Some(new_content);
+            } else if path.is_file() && let Some(extension) = path.extension() && extension == "lnk" {
+                if let Some(name_osstr) = path.file_stem() && let Some(name_str) = name_osstr.to_str() {
+                    name = name_str.to_string();
+                }
+            }
+            Ok(Self {
+                name,
+                content,
+                sorted: None,
+                path,
+                open: false,
+            })
+        } else {
+            Err(format!("Error getting name from path: {:?}", path))
         }
     }
     pub fn prep(&mut self, app_image_cache: Arc<Mutex<BTreeMap<PathBuf,Handle>>>) {
@@ -364,11 +467,17 @@ impl StartItem {
                 item.prep(app_image_cache.clone());
             };
         } else {
-            let mut app_icons_lock = app_image_cache.lock().unwrap();
-            if !app_icons_lock.contains_key(&self.path.clone()) {
-                if let Some((data,width,height)) = get_lnk_icon(self.path.clone()) {
-                    let icon_handle = Handle::from_rgba(width, height, data);
-                    app_icons_lock.insert(self.path.clone(), icon_handle);
+            match app_image_cache.lock() {
+                Ok(mut app_image_lock) => {
+                    if !app_image_lock.contains_key(&self.path.clone()) {
+                        if let Some((data,width,height)) = get_lnk_icon(self.path.clone()) {
+                            let icon_handle = Handle::from_rgba(width, height, data);
+                            app_image_lock.insert(self.path.clone(), icon_handle);
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Error accessing app_image_cache: {}", e);
                 }
             }
         }
@@ -381,8 +490,11 @@ impl StartItem {
                     self.open = !self.open;
                 } else if path.len() > 0 {
                     if let Some(content) = self.content.as_mut() {
-                        let sub_dir = path.pop().unwrap();
-                        content.get_mut(&sub_dir).unwrap().update(StartItemMessage::Toggle(path));
+                        if let Some(sub_dir) = path.pop() {
+                            if let Some(item) = content.get_mut(&sub_dir) {
+                                item.update(StartItemMessage::Toggle(path));
+                            }
+                        };
                     }
                 }
             }
@@ -411,9 +523,11 @@ impl StartItem {
                     for key in keys.iter() {
                         let mut new_path: Vec<String> = path.clone();
                         new_path.insert(0,key.clone());
-                        children = children.push(
-                            content.get(key).unwrap().view(icon_cache.clone(), app_image_cache.clone(), base_size.clone(), new_path)
-                        );
+                        if let Some(item) = content.get(key) {
+                            children = children.push(
+                                item.view(icon_cache.clone(), app_image_cache.clone(), base_size.clone(), new_path)
+                            );
+                        }
                     };
                     head = head.push(
                         children.spacing(spacing).padding(Padding::from([0.0,text_half_height])),
@@ -424,12 +538,24 @@ impl StartItem {
                 }
             }
             head.spacing(spacing).into()
-        } else if self.path.extension().unwrap() != "ini" {
-            let app_image_lock = app_image_cache.lock().unwrap();
-            let icon: Element<'_,Message> = if app_image_lock.contains_key(&self.path) {
-                image(app_image_lock.get(&self.path).unwrap()).height(text_half_height).width(text_half_height).content_fit(ContentFit::Fill).into()
-            } else {
-                canvas(EmptyApp {id: path.join("/"), cache: icon_cache.clone()}).height(text_half_height).width(text_half_height).into()
+        } else if let Some(extension) = self.path.extension() && extension != "ini" {
+            let icon: Element<'_,Message> =
+            match app_image_cache.lock() {
+                Ok(app_image_lock) => {
+                    if app_image_lock.contains_key(&self.path) {
+                        if let Some(image) = app_image_lock.get(&self.path) {
+                            iced::widget::image(image).height(text_half_height).width(text_half_height).content_fit(ContentFit::Fill).into()
+                        } else {
+                            canvas(EmptyApp {id: path.join("/"), cache: icon_cache.clone()}).height(text_half_height).width(text_half_height).into()
+                        }
+                    } else {
+                        canvas(EmptyApp {id: path.join("/"), cache: icon_cache.clone()}).height(text_half_height).width(text_half_height).into()
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Error getting app_image_cache: {}", e);
+                    canvas(EmptyApp {id: path.join("/"), cache: icon_cache.clone()}).height(text_half_height).width(text_half_height).into()
+                }
             };
             let context_menu = ContextMenu::new(
                 button(
