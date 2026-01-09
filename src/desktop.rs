@@ -36,45 +36,69 @@ impl Desktop {
         match message {
             DesktopMessage::Init => {
                 window::run(self.id, |window| {
-                    let raw_handle = window.window_handle().unwrap().as_raw();
-                    match raw_handle {
-                        window::raw_window_handle::RawWindowHandle::Win32(handle) => {
-                            let win_handle:HWND = HWND{ 0: handle.hwnd.get() as *mut c_void };
+                    match window.window_handle() {
+                        Ok(window_handle) => {
+                            let raw_handle = window_handle.as_raw();
+                            match raw_handle {
+                                window::raw_window_handle::RawWindowHandle::Win32(handle) => {
+                                    let win_handle:HWND = HWND{ 0: handle.hwnd.get() as *mut c_void };
 
-                            unsafe {
-                                let current_style = GetWindowLongPtrW(win_handle, GWL_EXSTYLE) as u32;
-                                let new_style = current_style | WS_EX_NOACTIVATE.0;
-                                SetWindowLongPtrW(win_handle, GWL_EXSTYLE, new_style as isize);
-                                SetWindowPos(
-                                    win_handle,
-                                    Some(HWND_BOTTOM),
-                                    0, 0, 0, 0,
-                                    SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE
-                                ).unwrap();
+                                    unsafe {
+                                        let current_style = GetWindowLongPtrW(win_handle, GWL_EXSTYLE) as u32;
+                                        let new_style = current_style | WS_EX_NOACTIVATE.0;
+                                        SetWindowLongPtrW(win_handle, GWL_EXSTYLE, new_style as isize);
+                                        match SetWindowPos(
+                                            win_handle,
+                                            Some(HWND_BOTTOM),
+                                            0, 0, 0, 0,
+                                            SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE
+                                        ) {
+                                            Err(e) => {
+                                                eprintln!("Error setting desktop position at system level: {}", e);
+                                            }
+                                            _ => {}
+                                        };
+                                    }
+
+                                }
+                                _ => {}
                             }
-                            
                         }
-                        _ => {}
+                        Err(e) => {
+                            eprintln!("Error getting desktop window handle: {}", e);
+                        }
                     }
                     Message::None
                 })
             }
             DesktopMessage::KeepAtBottom => {
                 window::run(self.id, |window| {
-                    let raw_handle = window.window_handle().unwrap().as_raw();
-                    match raw_handle {
-                        window::raw_window_handle::RawWindowHandle::Win32(handle) => {
-                            let win_handle:HWND = HWND{ 0: handle.hwnd.get() as *mut c_void };
-                            unsafe {
-                                SetWindowPos(
-                                    win_handle,
-                                    Some(HWND_BOTTOM),
-                                    0, 0, 0, 0,
-                                    SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE
-                                ).unwrap();
+                    match window.window_handle() {
+                        Ok(window_handle) => {
+                            let raw_handle = window_handle.as_raw();
+                            match raw_handle {
+                                window::raw_window_handle::RawWindowHandle::Win32(handle) => {
+                                    let win_handle:HWND = HWND{ 0: handle.hwnd.get() as *mut c_void };
+                                    unsafe {
+                                        match SetWindowPos(
+                                            win_handle,
+                                            Some(HWND_BOTTOM),
+                                            0, 0, 0, 0,
+                                            SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE
+                                        ) {
+                                            Err(e) => {
+                                                eprintln!("Error setting desktop position at system level: {}", e);
+                                            }
+                                            _ => {}
+                                        };
+                                    }
+                                }
+                                _ => {}
                             }
                         }
-                        _ => {}
+                        Err(e) => {
+                            eprintln!("Error getting desktop window handle: {}", e);
+                        }
                     }
                     Message::None
                 })
