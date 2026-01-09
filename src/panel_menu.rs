@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use std::ops::RangeInclusive;
 use std::sync::{Arc, Mutex};
 use iced::{window, Alignment, Element, Length, Pixels, Point, Size, Task};
-use iced::widget::{canvas, row, text, column, slider, button};
+use iced::widget::{canvas, row, text, column, slider, button, space};
 use iced::widget::text::Wrapping;
 use crate::icons::{BatteryIcon, FrostwinIcons, VolumeIcon, WifiIcon};
 use crate::Message;
@@ -55,9 +55,19 @@ impl PanelMenu {
             }
         }
     }
-    pub fn view(&self, icon_cache: Arc<Mutex<BTreeMap<FrostwinIcons,Box<dyn Any>>>>,base_size: f32,battery_level: f32,charging: bool,wifi_status: WifiStatus, system_volume: f32, volume_muted: bool) -> Element<'_, Message> {
+    pub fn view(&self, icon_cache: Arc<Mutex<BTreeMap<FrostwinIcons,Box<dyn Any>>>>,base_size: f32,battery: Option<(f32,bool)>,wifi_status: WifiStatus, system_volume: f32, volume_muted: bool) -> Element<'_, Message> {
         let spacing = base_size * 2.0;
         let text_height = 30.0 * base_size;
+        let battery_icon: Element<Message> = if let Some((battery_level,charging)) = battery {
+            column![
+                canvas(BatteryIcon {id:"Panel".to_string(), cache: icon_cache.clone(), charging,level: battery_level})
+                            .width(Length::Fixed(36.0 * base_size))
+                            .height(Length::Fixed(36.0 * base_size)),
+                text!("{}%",battery_level.round())
+            ].into()
+        } else {
+            space().height(Length::Fixed(0.0)).into()
+        };
         row![
             column![
                 row![
@@ -80,10 +90,7 @@ impl PanelMenu {
                 ].align_y(Alignment::Center).spacing(spacing),
             ].width(Length::FillPortion(4)).height(Length::Fill).spacing(spacing),
             column![
-                canvas(BatteryIcon {id:"Panel".to_string(), cache: icon_cache.clone(), charging,level: battery_level})
-                            .width(Length::Fixed(36.0 * base_size))
-                            .height(Length::Fixed(36.0 * base_size)),
-                text!("{}%",battery_level.round()),
+                battery_icon,
                 canvas(WifiIcon {id:"Panel".to_string(), cache: icon_cache.clone(), status: wifi_status.clone()})
                             .width(Length::Fixed(36.0 * base_size))
                             .height(Length::Fixed(36.0 * base_size)),

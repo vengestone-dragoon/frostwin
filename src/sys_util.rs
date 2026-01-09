@@ -1,4 +1,5 @@
 use battery::*;
+use windows::core::Result;
 use windows::Win32::Foundation::{ERROR_BUFFER_OVERFLOW, ERROR_SUCCESS, HANDLE, LUID};
 use windows::Win32::Media::Audio::{Endpoints::*, *};
 use windows::Win32::NetworkManagement::IpHelper::{GetAdaptersAddresses, GAA_FLAG_SKIP_ANYCAST, GAA_FLAG_SKIP_DNS_SERVER, GAA_FLAG_SKIP_MULTICAST, IF_TYPE_ETHERNET_CSMACD, IP_ADAPTER_ADDRESSES_LH};
@@ -10,17 +11,17 @@ use windows::Win32::Security::{AdjustTokenPrivileges, LookupPrivilegeValueW, SE_
 use windows::Win32::System::Shutdown::{ExitWindowsEx, InitiateSystemShutdownExA, EWX_LOGOFF, SHTDN_REASON_FLAG_PLANNED, SHTDN_REASON_MINOR_NONE};
 use windows::Win32::System::Threading::{GetCurrentProcess, OpenProcessToken};
 
-pub fn get_battery_info() -> (f32, bool) {
-    let manager = Manager::new().unwrap();
-    if let Some(Ok(battery)) = manager.batteries().unwrap().next() {
+pub fn get_battery_info() -> battery::Result<(f32, bool)> {
+    let manager = Manager::new()?;
+    if let Some(Ok(battery)) = manager.batteries()?.next() {
         let percentage = battery.state_of_charge().get::<units::ratio::percent>();
         let is_charging = matches!(
             battery.state(),
             State::Charging | State::Full
         );
-        return (percentage, is_charging);
+        return Ok((percentage, is_charging));
     }
-    (0.0, false)
+    Ok((0.0, false))
 }
 
 #[derive(Debug,Clone)]
@@ -146,38 +147,42 @@ fn get_ethernet_status() -> bool {
         false
     }
 }
-pub fn get_sound_state() -> (f32,bool) {
+pub fn get_sound_state() -> Result<(f32, bool)> {
     unsafe {
-        let _ = CoInitializeEx(None, COINIT_APARTMENTTHREADED).ok();
+        // CoInitializeEx can safely be called multiple times; we ignore errors if already initialized
+        let _ = CoInitializeEx(None, COINIT_APARTMENTTHREADED);
 
-        // 2. Get Device Enumerator
-        let enumerator: IMMDeviceEnumerator =
-            CoCreateInstance(&MMDeviceEnumerator, None, CLSCTX_ALL).unwrap();
+        // Get Device Enumerator
+        let enumerator: IMMDeviceEnumerator = CoCreateInstance(&MMDeviceEnumerator, None, CLSCTX_ALL)?;
 
-        // 3. Get Default Endpoint (Playback)
-        let device = enumerator.GetDefaultAudioEndpoint(eRender, eConsole).unwrap();
+        // Get Default Endpoint (Playback) - Fails if no audio device is connected
+        let device = enumerator.GetDefaultAudioEndpoint(eRender, eConsole)?;
 
-        // 4. Activate Volume Interface
-        let volume: IAudioEndpointVolume = device.Activate(CLSCTX_ALL, None).unwrap();
+        // Activate Volume Interface
+        let volume: IAudioEndpointVolume = device.Activate(CLSCTX_ALL, None)?;
 
-        // 5. Get Master Volume (0.0 to 1.0)
-        (volume.GetMasterVolumeLevelScalar().unwrap(),
-        volume.GetMute().unwrap().as_bool())
+        // Fetch volume and mute status
+        let level = volume.GetMasterVolumeLevelScalar()?;
+        let mute = volume.GetMute()?.as_bool();
+
+        Ok((level, mute))
     }
 }
 
-pub fn set_sound_state(level: f32, mute: bool) {
+pub fn set_sound_state(level: f32, mute: bool) -> Result<()> {
     unsafe {
-        // level should be 0.0 to 1.0
         let level = level.clamp(0.0, 1.0);
 
-        let _ = CoInitializeEx(None, COINIT_APARTMENTTHREADED).ok();
-        let enumerator: IMMDeviceEnumerator = CoCreateInstance(&MMDeviceEnumerator, None, CLSCTX_ALL).unwrap();
-        let device = enumerator.GetDefaultAudioEndpoint(eRender, eConsole).unwrap();
-        let volume: IAudioEndpointVolume = device.Activate(CLSCTX_ALL, None).unwrap();
+        let _ = CoInitializeEx(None, COINIT_APARTMENTTHREADED);
 
-        volume.SetMasterVolumeLevelScalar(level, std::ptr::null()).unwrap();
-        volume.SetMute(mute, std::ptr::null()).unwrap();
+        let enumerator: IMMDeviceEnumerator = CoCreateInstance(&MMDeviceEnumerator, None, CLSCTX_ALL)?;
+        let device = enumerator.GetDefaultAudioEndpoint(eRender, eConsole)?;
+        let volume: IAudioEndpointVolume = device.Activate(CLSCTX_ALL, None)?;
+
+        volume.SetMasterVolumeLevelScalar(level, std::ptr::null())?;
+        volume.SetMute(mute, std::ptr::null())?;
+
+        Ok(())
     }
 }
 

@@ -204,7 +204,7 @@ impl Taskbar {
             _ => Task::none()
         }
     }
-    pub fn view(&self, icon_cache: Arc<Mutex<BTreeMap<FrostwinIcons,Box<dyn Any>>>>, start_state: bool, panel_state: bool,base_size: f32,battery_level: f32,charging: bool,wifi_status: WifiStatus,system_volume: f32,volume_muted: bool) -> Element<'_, Message> {
+    pub fn view(&self, icon_cache: Arc<Mutex<BTreeMap<FrostwinIcons,Box<dyn Any>>>>, start_state: bool, panel_state: bool,base_size: f32,battery: Option<(f32,bool)>,wifi_status: WifiStatus,system_volume: f32,volume_muted: bool) -> Element<'_, Message> {
         let text_half_height = 15.0 * base_size;
         let spacing = 2.0 * base_size;
         let clock: Column<Message> =
@@ -235,6 +235,19 @@ impl Taskbar {
                 );
             }
         }
+        let battery_icon: Element<Message> = if let Some((battery_level,charging)) = battery {
+            tooltip(
+                canvas(BatteryIcon {id:"Taskbar".to_string(), cache: icon_cache.clone(), charging, level: battery_level})
+                    .width(Length::Fixed(24.0 * base_size))
+                    .height(Length::Fixed(24.0 * base_size)),
+                container(column![
+                        text!("{}%", battery_level.round()),
+                    ]).style(container::rounded_box),
+                tooltip::Position::FollowCursor
+            ).into()
+        } else {
+            space().width(Length::Fixed(0.0)).into()
+        };
 
         row![
             button(
@@ -276,15 +289,7 @@ impl Taskbar {
                     ]).style(container::rounded_box),
                         tooltip::Position::FollowCursor
                 ),
-                tooltip(
-                    canvas(BatteryIcon {id:"Taskbar".to_string(), cache: icon_cache.clone(), charging, level: battery_level})
-                    .width(Length::Fixed(24.0 * base_size))
-                    .height(Length::Fixed(24.0 * base_size)),
-                    container(column![
-                        text!("{}%", battery_level.round()),
-                    ]).style(container::rounded_box),
-                        tooltip::Position::FollowCursor
-                ),
+                battery_icon,
                 clock.padding(Padding::from([0.0,spacing]))
             ].align_y(Alignment::Center))
                 .on_press(if panel_state {Message::None} else {Message::OpenPanelMenu})

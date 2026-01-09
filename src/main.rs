@@ -66,9 +66,8 @@ struct AppMain {
     start_menu: Option<StartMenu>,
     panel_menu: Option<PanelMenu>,
     power_window: Option<PowerWindow>,
+    battery: Option<(f32,bool)>,
     base_size: f32,
-    battery_level: f32,
-    charging: bool,
     wifi_status: WifiStatus,
     system_volume: f32,
     volume_muted: bool,
@@ -106,9 +105,8 @@ impl AppMain {
                 start_menu: None,
                 panel_menu: None,
                 power_window: None,
+                battery: None,
                 base_size: 1.0,
-                battery_level: 0.0,
-                charging: false,
                 wifi_status: WifiStatus::Disconnected,
                 system_volume: 0.0,
                 volume_muted: false,
@@ -231,9 +229,25 @@ impl AppMain {
                 Task::none()
             }
             Message::Tick(_) => {
-                (self.battery_level, self.charging) = get_battery_info();
+                self.battery = match get_battery_info() {
+                    Ok(data) => {
+                        Some(data)
+                    }
+                    Err(e) => {
+                        eprintln!("Error getting battery info: {}", e);
+                        None
+                    }
+                };
                 self.wifi_status = get_wifi_status();
-                (self.system_volume, self.volume_muted) = get_sound_state();
+                (self.system_volume, self.volume_muted) = match get_sound_state() {
+                    Ok(data) => {
+                        data
+                    }
+                    Err(e) => {
+                        eprintln!("Error getting volume data: {}", e);
+                        (0.0, false)
+                    }
+                };
                 let power_task = if let Some(power_window) = self.power_window.as_mut() {
                     power_window.update(PowerMenuMessage::Tick)
                 } else {Task::none()};
@@ -252,8 +266,7 @@ impl AppMain {
                 start_state,
                 panel_state,
                 self.base_size,
-                self.battery_level,
-                self.charging,
+                self.battery,
                 self.wifi_status.clone(),
                 self.system_volume,
                 self.volume_muted)
@@ -262,7 +275,7 @@ impl AppMain {
         } else if let Some(start_menu) = self.start_menu.as_ref() && window_id == start_menu.id {
             start_menu.view(self.icon_cache.clone(),self.app_image_cache.clone(),self.base_size)
         } else if let Some(panel) = self.panel_menu.as_ref() && window_id == panel.id {
-            panel.view(self.icon_cache.clone(),self.base_size,self.battery_level,self.charging,self.wifi_status.clone(),self.system_volume,self.volume_muted)
+            panel.view(self.icon_cache.clone(),self.base_size,self.battery,self.wifi_status.clone(),self.system_volume,self.volume_muted)
         } else if let Some(power_window) = self.power_window.as_ref() && window_id == power_window.id {
             power_window.view(self.icon_cache.clone())
         } else {
