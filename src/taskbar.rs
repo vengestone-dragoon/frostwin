@@ -138,35 +138,47 @@ impl Taskbar {
             TaskbarMessage::Tick => {
                 let old_windows = self.tasks.clone();
                 self.tasks.clear();
-                let user_windows = get_open_windows().unwrap();
                 let mut tasks: Vec<Task<Message>> = Vec::new();
-                for window in user_windows {
-                    if old_windows.contains_key(&window.id) {
-                        self.tasks.insert(window.id,old_windows[&window.id].clone());
-                    } else {
-                        let window_icon = get_window_icon(&window.clone()).unwrap();
-                        let base64_data = window_icon.data.split(',').nth(1).unwrap_or("");
-                        match base64::engine::general_purpose::STANDARD.decode(base64_data) {
-                            Ok(bytes) => {
-                                println!("Successfully decoded {} bytes", bytes.len());
-                                let image_handle = image::Handle::from_bytes(bytes);
-                                tasks.push(image::allocate(image_handle).map(move |result|{
-                                    match result {
-                                        Ok(allocation) => Message::Taskbar(TaskbarMessage::Allocate(window.id,(Some(allocation),window.clone()))),
-                                        Err(e) => {
-                                            println!("Error: image alloc: {}",e);
-                                            Message::Taskbar(TaskbarMessage::Allocate(window.id,(None,window.clone())))
+                match get_open_windows() {
+                    Ok(user_windows) => {
+                        for window in user_windows {
+                            if old_windows.contains_key(&window.id) {
+                                self.tasks.insert(window.id,old_windows[&window.id].clone());
+                            } else {
+                                match get_window_icon(&window.clone()) {
+                                    Ok(window_icon) => {
+                                        let base64_data = window_icon.data.split(',').nth(1).unwrap_or("");
+                                        match base64::engine::general_purpose::STANDARD.decode(base64_data) {
+                                            Ok(bytes) => {
+                                                println!("Successfully decoded {} bytes", bytes.len());
+                                                let image_handle = image::Handle::from_bytes(bytes);
+                                                tasks.push(image::allocate(image_handle).map(move |result|{
+                                                    match result {
+                                                        Ok(allocation) => Message::Taskbar(TaskbarMessage::Allocate(window.id,(Some(allocation),window.clone()))),
+                                                        Err(e) => {
+                                                            println!("Error: image alloc: {}",e);
+                                                            Message::Taskbar(TaskbarMessage::Allocate(window.id,(None,window.clone())))
+                                                        }
+                                                    }
+                                                }))
+                                            }
+                                            Err(e) => {
+                                                eprintln!("Error decoding base64: {}",e);
+                                            }
                                         }
                                     }
-                                }))
+                                    Err(e) => {
+                                        eprintln!("Error getting window icon: {}", e);
+                                    }
+                                }
                             }
-                            Err(e) => {
-                                println!("Error decoding base64: {}",e);
-
-                            }
-                        }
+                        };
                     }
-                };
+                    Err(e) => {
+                        eprintln!("Error getting open windows: {:?}", e);
+                    }
+                }
+
                 if tasks.is_empty() {
                     Task::none()
                 } else {
