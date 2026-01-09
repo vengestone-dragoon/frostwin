@@ -75,9 +75,23 @@ struct AppMain {
 }
 impl AppMain {
     pub fn new() -> (Self,Task<Message>) {
-        let data_folder = data_dir().unwrap().join("Frostwin");
-        if !data_folder.exists() {
-            std::fs::create_dir_all(&data_folder).unwrap();
+        if let Some(mut data_folder) = data_dir() {
+            data_folder.push("Frostwin");
+            if let Err(e) = std::fs::create_dir_all(&data_folder) {
+                match e.kind() {
+                    std::io::ErrorKind::PermissionDenied => {
+                        eprintln!("Error: Permission denied creating directory {:?}", data_folder);
+                    }
+                    std::io::ErrorKind::AlreadyExists => {
+                        eprintln!("Error: A file already exists at the folder path {:?}", data_folder);
+                    }
+                    _ => {
+                        eprintln!("Error creating data directory: {}", e);
+                    }
+                }
+            }
+        } else {
+            eprintln!("Error: Could not determine the system data directory.");
         }
         let icon_cache: Arc<Mutex<BTreeMap<FrostwinIcons,Box<dyn Any>>>> = Arc::new(Mutex::new(BTreeMap::new()));
         let app_image_cache: Arc<Mutex<BTreeMap<PathBuf,Handle>>> = Arc::new(Mutex::new(BTreeMap::new()));
