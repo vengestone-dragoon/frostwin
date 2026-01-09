@@ -99,12 +99,50 @@ impl StartMenu {
                 let system_programs_path = PathBuf::from(r"C:\ProgramData\Microsoft\Windows\Start Menu\Programs\");
                 let user_programs_path = data_dir().unwrap().join(r"Microsoft\Windows\Start Menu\Programs\");
                 let start_settings_file = data_dir().unwrap().join(r"Frostwin\Start_Settings.json");
-                if !start_settings_file.exists() {
-                    std::fs::write(&start_settings_file, "").unwrap();
-                } else {
-                    self.settings = from_str(std::fs::read_to_string(start_settings_file).unwrap().as_str()).unwrap();
-                }
+                if start_settings_file.exists() {
+                    match std::fs::read_to_string(start_settings_file.clone()) {
+                        Ok(content) => {
+                            match from_str::<StartMenuSettings>(&content) {
+                                Ok(settings) => {
+                                    self.settings = settings;
+                                }
+                                Err(e) => {
+                                    println!("Error loading start menu settings: {:?}", e);
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            println!("Error opening start menu settings: {:?}", e);
+                            match e.kind() {
+                                std::io::ErrorKind::NotFound => {
+                                    // Ensure the folder exists before creating the file
+                                    if let Some(parent) = start_settings_file.parent() {
+                                        let _ = std::fs::create_dir_all(parent);
+                                    }
+                                    let _ = std::fs::write(&start_settings_file, "{}");
+                                }
 
+                                std::io::ErrorKind::PermissionDenied => {
+                                    eprintln!("Permission denied. Attempting to fix file attributes...");
+                                    if let Ok(metadata) = std::fs::metadata(&start_settings_file) {
+                                        let mut perms = metadata.permissions();
+                                        if perms.readonly() {
+                                            perms.set_readonly(false);
+                                            // If we can fix permissions, try to write a fresh file
+                                            if std::fs::set_permissions(&start_settings_file, perms).is_ok() {
+                                                let _ = std::fs::write(&start_settings_file, "{}");
+                                            }
+                                        }
+                                    }
+                                }
+
+                                _ => eprintln!("Critical I/O error: {}", e),
+                            }
+                        }
+                    }
+                } else {
+                    std::fs::write(&start_settings_file, "").unwrap();
+                }
                 get_dir_contents(user_programs_path, &mut content);
                 get_dir_contents(system_programs_path, &mut content);
                 self.content = content;
