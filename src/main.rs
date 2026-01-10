@@ -4,14 +4,13 @@ mod taskbar;
 mod desktop;
 mod start_menu;
 mod panel_menu;
-mod icons;
 mod styles;
 mod sys_util;
 mod power_window;
 mod windows_icons;
+mod raw_icons;
 
 use crate::desktop::{Desktop, DesktopMessage};
-use crate::icons::FrostwinIcons;
 use crate::panel_menu::{PanelMenu, PanelMessage};
 use crate::power_window::{PowerMenuMessage, PowerOptions, PowerWindow};
 use crate::start_menu::{StartMenu, StartMessage};
@@ -27,6 +26,7 @@ use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
+use crate::raw_icons::{load_frostwin_icons, unpack_missing_icons};
 
 fn main() -> iced::Result {
     iced::daemon::daemon(AppMain::new, AppMain::update, AppMain::view)
@@ -59,7 +59,6 @@ pub enum Message {
     None,
 }
 struct AppMain {
-    icon_cache: Arc<Mutex<BTreeMap<FrostwinIcons,Box<dyn Any>>>>,
     app_image_cache: Arc<Mutex<BTreeMap<PathBuf,Handle>>>,
     taskbar: Taskbar,
     desktop: Desktop,
@@ -74,6 +73,7 @@ struct AppMain {
 }
 impl AppMain {
     pub fn new() -> (Self,Task<Message>) {
+        let app_image_cache: Arc<Mutex<BTreeMap<PathBuf,Handle>>> = Arc::new(Mutex::new(BTreeMap::new()));
         if let Some(mut data_folder) = data_dir() {
             data_folder.push("Frostwin");
             if let Err(e) = std::fs::create_dir_all(&data_folder) {
@@ -89,16 +89,25 @@ impl AppMain {
                     }
                 }
             }
+            match unpack_missing_icons(data_folder.clone()) {
+                Err(e) => {
+                    eprintln!("Error: Unpacking default icons: {}", e);
+                }
+                _ => {}
+            };
+            match load_frostwin_icons(&data_folder, app_image_cache.clone()) {
+                Err(e) => {
+                    eprintln!("Error: Loading system images: {}", e);
+                }
+                _ => {}
+            };
         } else {
             eprintln!("Error: Could not determine the system data directory.");
         }
-        let icon_cache: Arc<Mutex<BTreeMap<FrostwinIcons,Box<dyn Any>>>> = Arc::new(Mutex::new(BTreeMap::new()));
-        let app_image_cache: Arc<Mutex<BTreeMap<PathBuf,Handle>>> = Arc::new(Mutex::new(BTreeMap::new()));
         let (desktop,open_desktop) = Desktop::new();
         let (taskbar,open_taskbar) = Taskbar::new();
         (
             Self {
-                icon_cache,
                 app_image_cache,
                 taskbar,
                 desktop,
@@ -262,7 +271,7 @@ impl AppMain {
             let start_state = self.start_menu.is_some();
             let panel_state = self.panel_menu.is_some();
             self.taskbar.view(
-                self.icon_cache.clone(),
+                self.app_image_cache.clone(),
                 start_state,
                 panel_state,
                 self.base_size,
@@ -273,11 +282,11 @@ impl AppMain {
         } else if window_id == self.desktop.id {
             self.desktop.view()
         } else if let Some(start_menu) = self.start_menu.as_ref() && window_id == start_menu.id {
-            start_menu.view(self.icon_cache.clone(),self.app_image_cache.clone(),self.base_size)
+            start_menu.view(self.app_image_cache.clone(),self.base_size)
         } else if let Some(panel) = self.panel_menu.as_ref() && window_id == panel.id {
-            panel.view(self.icon_cache.clone(),self.base_size,self.battery,self.wifi_status.clone(),self.system_volume,self.volume_muted)
+            panel.view(self.app_image_cache.clone(),self.base_size,self.battery,self.wifi_status.clone(),self.system_volume,self.volume_muted)
         } else if let Some(power_window) = self.power_window.as_ref() && window_id == power_window.id {
-            power_window.view(self.icon_cache.clone())
+            power_window.view(self.app_image_cache.clone())
         } else {
             column![].into()
         }

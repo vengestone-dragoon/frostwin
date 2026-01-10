@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   width="100"
+   height="100"
+   viewBox="0 0 100 100"
+   version="1.1"
+   xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .stroke {
+      stroke: #ccccccff;
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: #00000000;
+    }
+  </style>
+  <g id="battery">
+    <path d="M 25.0 8.0 L 75.0 8.0" class="stroke"></path>
+    <rect x="12" y="14" rx="15" width="76" height="80" class="stroke"></rect>
+  </g>
+  <g id="level">
+    <rect x="18" y="20.0" rx="9" width="64" height="68.0" fill="#ccccccff"></rect>
+    <rect x="18" y="26.8" rx="9" width="64" height="61.2" fill="#ccccccff"></rect>
+    <rect x="18" y="33.6" rx="9" width="64" height="54.4" fill="#ccccccff"></rect>
+    <rect x="18" y="40.4" rx="9" width="64" height="47.6" fill="#ccccccff"></rect>
+    <rect x="18" y="47.6" rx="9" width="64" height="40.8" fill="#ccccccff"></rect>
+    <rect x="18" y="54.4" rx="9" width="64" height="34.0" fill="#ccccccff"></rect>
+    <rect x="18" y="61.2" rx="9" width="64" height="27.2" fill="#ccccccff"></rect>
+    <rect x="18" y="67.6" rx="9" width="64" height="20.4" fill="#ccccccff"></rect>
+    <rect x="18" y="74.4" rx="9" width="64" height="13.6" fill="#ccccccff"></rect>
+    <rect x="18" y="81.2" rx="9" width="64" height="06.8" fill="#ccccccff"></rect>
+  </g>
+  <g id="charging_level">
+    <rect x="18" y="20.0" rx="9" width="64" height="68.0" fill="#33cc33ff"></rect>
+    <rect x="18" y="26.8" rx="9" width="64" height="61.2" fill="#33cc33ff"></rect>
+    <rect x="18" y="33.6" rx="9" width="64" height="54.4" fill="#33cc33ff"></rect>
+    <rect x="18" y="40.4" rx="9" width="64" height="47.6" fill="#33cc33ff"></rect>
+    <rect x="18" y="47.6" rx="9" width="64" height="40.8" fill="#33cc33ff"></rect>
+    <rect x="18" y="54.4" rx="9" width="64" height="34.0" fill="#33cc33ff"></rect>
+    <rect x="18" y="61.2" rx="9" width="64" height="27.2" fill="#33cc33ff"></rect>
+    <rect x="18" y="67.6" rx="9" width="64" height="20.4" fill="#33cc33ff"></rect>
+    <rect x="18" y="74.4" rx="9" width="64" height="13.6" fill="#33cc33ff"></rect>
+    <rect x="18" y="81.2" rx="9" width="64" height="06.8" fill="#33cc33ff"></rect>
+  </g>
+  <g id="charging">
+    <path d="M 50.0 10.0 L 25.0 50.0 L 50.0 55.0 L 50.0 98.0 L 75.0 50.0 L 50.0 45.0 Z" fill="#ccccccff"></path>
+  </g>
+</svg>

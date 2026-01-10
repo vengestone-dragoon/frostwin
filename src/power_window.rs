@@ -1,12 +1,16 @@
-use crate::icons::{CancelButton, FrostwinIcons, LockButton, LogoffButton, PowerButton, RestartButton, StartLogo};
 use crate::styles::colored_button;
 use crate::Message;
-use iced::widget::{button, canvas, column, container, row, text};
+use iced::widget::{button, canvas, column, container, image, row, text};
 use iced::{window, Alignment, Color, Element, Length, Size, Task};
 use std::any::Any;
 use std::collections::BTreeMap;
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
+use dirs::data_dir;
+use iced::advanced::image::Handle;
+use iced::futures::future::err;
+use crate::raw_icons::start_icon;
 use crate::sys_util::{lock, logoff, windows_power};
 
 #[derive(Debug, Clone)]
@@ -122,7 +126,7 @@ impl PowerWindow {
             }
         }
     }
-    pub fn view(&self, icon_cache: Arc<Mutex<BTreeMap<FrostwinIcons,Box<dyn Any>>>>) -> Element<'_, Message> {
+    pub fn view(&self, app_image_cache: Arc<Mutex<BTreeMap<PathBuf,Handle>>>) -> Element<'_, Message> {
         let elapsed = self.time.elapsed().as_secs();
         let time_remaining = 30_u64.saturating_sub(elapsed);
         let task =
@@ -140,10 +144,51 @@ impl PowerWindow {
                 "Logging Off"
             }
         };
+        let (
+            lock_button,
+            logoff_button,
+            restart_button,
+            shutdown_button,
+            cancel_button,
+        ) = match (app_image_cache.lock(),data_dir()) {
+            (Ok(app_image_lock),Some(data_dir)) => {
+                let data_folder = data_dir.join("Frostwin");
+                let error_handle = Handle::from_rgba(1,1,vec![255u8,0u8,0u8,255u8]);
+                (
+                    app_image_lock.get(&data_folder.join("icons/power/Lock.png")).unwrap_or(&error_handle).clone(),
+                    app_image_lock.get(&data_folder.join("icons/power/Logoff.png")).unwrap_or(&error_handle).clone(),
+                    app_image_lock.get(&data_folder.join("icons/power/Restart.png")).unwrap_or(&error_handle).clone(),
+                    app_image_lock.get(&data_folder.join("icons/power/Shutdown.png")).unwrap_or(&error_handle).clone(),
+                    app_image_lock.get(&data_folder.join("icons/power/Cancel.png")).unwrap_or(&error_handle).clone(),
+                )
+            }
+            (Err(error),_) => {
+                eprintln!("Error getting app image cache: {}", error);
+                let error_handle = Handle::from_rgba(1,1,vec![255u8,0u8,0u8,255u8]);
+                (
+                    error_handle.clone(),
+                    error_handle.clone(),
+                    error_handle.clone(),
+                    error_handle.clone(),
+                    error_handle.clone(),
+                )
+            }
+            (_,None) => {
+                eprintln!("Error getting data directory");
+                let error_handle = Handle::from_rgba(1,1,vec![255u8,0u8,0u8,255u8]);
+                (
+                    error_handle.clone(),
+                    error_handle.clone(),
+                    error_handle.clone(),
+                    error_handle.clone(),
+                    error_handle.clone(),
+                )
+            }
+        };
         container(
             column![
                 container(
-                    canvas(StartLogo {id: "PowerMenu".to_string(), open: true, cache: icon_cache.clone()}).width(Length::Fixed(124.0)).height(Length::Fixed(124.0)),
+                    image(start_icon(app_image_cache.clone(),true)).width(Length::Fixed(124.0)).height(Length::Fixed(124.0)),
                 ).align_x(Alignment::Center).align_y(Alignment::Center).width(Length::Fill).height(Length::FillPortion(4)),
                 row![
                     text!("{} in {}s", task, time_remaining),
@@ -151,7 +196,7 @@ impl PowerWindow {
                 row![
                     button(
                         column![
-                            canvas(LockButton {id: "PowerMenu".to_string(),cache: icon_cache.clone()}).width(Length::Fill).height(Length::Fill),
+                            image(lock_button).width(Length::Fill).height(Length::Fill),
                         ]
                     ).on_press(Message::PowerMenu(PowerMenuMessage::Execute(PowerOptions::Lock)))
                     .width(Length::Fill)
@@ -160,7 +205,7 @@ impl PowerWindow {
                     .style(|theme, status| colored_button(theme, status, Color::from_rgb(0.2,0.2,0.7))),
                     button(
                         column![
-                            canvas(LogoffButton {id: "PowerMenu".to_string(),cache: icon_cache.clone()}).width(Length::Fill).height(Length::Fill),
+                            image(logoff_button).width(Length::Fill).height(Length::Fill),
                         ]
                     ).on_press(Message::PowerMenu(PowerMenuMessage::Execute(PowerOptions::LogOff)))
                     .width(Length::Fill)
@@ -169,7 +214,7 @@ impl PowerWindow {
                     .style(|theme, status| colored_button(theme, status, Color::from_rgb(0.7,0.5,0.4))),
                     button(
                         column![
-                            canvas(RestartButton {id: "PowerMenu".to_string(),cache: icon_cache.clone()}).width(Length::Fill).height(Length::Fill),
+                            image(restart_button).width(Length::Fill).height(Length::Fill),
                         ]
                     ).on_press(Message::PowerMenu(PowerMenuMessage::Execute(PowerOptions::Reboot)))
                     .width(Length::Fill)
@@ -178,7 +223,7 @@ impl PowerWindow {
                     .style(|theme, status| colored_button(theme, status, Color::from_rgb(0.2,0.7,0.2))),
                     button(
                         column![
-                            canvas(PowerButton {id: "PowerMenu".to_string(),cache: icon_cache.clone()}).width(Length::Fill).height(Length::Fill),
+                            image(shutdown_button).width(Length::Fill).height(Length::Fill),
                         ]
                     ).on_press(Message::PowerMenu(PowerMenuMessage::Execute(PowerOptions::Shutdown)))
                     .width(Length::Fill)
@@ -187,7 +232,7 @@ impl PowerWindow {
                     .style(|theme, status| colored_button(theme, status, Color::from_rgb(0.7,0.2,0.2))),
                     button(
                         column![
-                            canvas(CancelButton {id: "PowerMenu".to_string(),cache: icon_cache.clone()}).width(Length::Fill).height(Length::Fill),
+                            image(cancel_button).width(Length::Fill).height(Length::Fill),
                         ]
                     ).on_press(Message::PowerMenu(PowerMenuMessage::Cancel))
                     .width(Length::Fill)

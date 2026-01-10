@@ -1,20 +1,21 @@
-use crate::icons::{BatteryIcon, DropDownIcon, FrostwinIcons, StartLogo, VolumeIcon, WifiIcon};
 use crate::styles::transparent_button;
 use crate::sys_util::WifiStatus;
 use crate::Message;
 use base64::Engine;
 use chrono::offset::Local;
 use iced::widget::image::Allocation;
-use iced::widget::{button, canvas, column, container, image, row, space, text, tooltip, Button, Column, Row};
+use iced::widget::{button, column, container, image, row, space, text, tooltip, Button, Column, Row};
 use iced::{window, Alignment, Element, Length, Padding, Point, Size, Task};
-use std::any::Any;
 use std::collections::BTreeMap;
 use std::ffi::c_void;
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
+use iced::advanced::image::Handle;
 use windows::Win32::Foundation::{HWND, RECT};
 use windows::Win32::UI::Shell::{SHAppBarMessage, ABE_TOP, ABM_NEW, ABM_QUERYPOS, ABM_SETPOS, APPBARDATA};
 use windows::Win32::UI::WindowsAndMessaging::{GetSystemMetrics, GetWindowPlacement, SetForegroundWindow, SetWindowPos, ShowWindow, HWND_NOTOPMOST, SM_CXSCREEN, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SW_RESTORE, SW_SHOWMINIMIZED, WINDOWPLACEMENT};
 use x_win::{get_open_windows, get_window_icon, WindowInfo};
+use crate::raw_icons::{battery_icon, sound_icon, start_icon, wifi_icon};
 
 #[derive(Debug, Clone)]
 pub enum TaskbarMessage {
@@ -204,7 +205,7 @@ impl Taskbar {
             _ => Task::none()
         }
     }
-    pub fn view(&self, icon_cache: Arc<Mutex<BTreeMap<FrostwinIcons,Box<dyn Any>>>>, start_state: bool, panel_state: bool,base_size: f32,battery: Option<(f32,bool)>,wifi_status: WifiStatus,system_volume: f32,volume_muted: bool) -> Element<'_, Message> {
+    pub fn view(&self, app_image_cache: Arc<Mutex<BTreeMap<PathBuf,Handle>>>, start_state: bool, panel_state: bool,base_size: f32,battery: Option<(f32,bool)>,wifi_status: WifiStatus,system_volume: f32,volume_muted: bool) -> Element<'_, Message> {
         let text_half_height = 15.0 * base_size;
         let spacing = 2.0 * base_size;
         let clock: Column<Message> =
@@ -236,8 +237,9 @@ impl Taskbar {
             }
         }
         let battery_icon: Element<Message> = if let Some((battery_level,charging)) = battery {
+            
             tooltip(
-                canvas(BatteryIcon {id:"Taskbar".to_string(), cache: icon_cache.clone(), charging, level: battery_level})
+                image(battery_icon(app_image_cache.clone(), charging, battery_level))
                     .width(Length::Fixed(24.0 * base_size))
                     .height(Length::Fixed(24.0 * base_size)),
                 container(column![
@@ -252,7 +254,7 @@ impl Taskbar {
         row![
             button(
                 container(
-                    canvas(StartLogo {id: "Taskbar".to_string(),open: start_state, cache: icon_cache.clone()})
+                    image(start_icon(app_image_cache.clone(), start_state))
                         .width(Length::Fixed(24.0 * base_size))
                         .height(Length::Fixed(24.0 * base_size)),
                 ).width(Length::Fill).height(Length::Fill).align_y(Alignment::Center).align_x(Alignment::Center)
@@ -264,9 +266,8 @@ impl Taskbar {
             tasks.spacing(spacing),
             space().width(Length::Fill),
             button(row![
-                canvas(DropDownIcon {id: "Taskbar".to_string(),open: panel_state, cache: icon_cache.clone()}).width(Length::Fixed(24.0 * base_size)).height(Length::Fixed(24.0 * base_size)),
                 tooltip(
-                    canvas(VolumeIcon {id:"Taskbar".to_string(), cache: icon_cache.clone(),volume: system_volume,muted: volume_muted})
+                    image(sound_icon(app_image_cache.clone(), system_volume, volume_muted))
                         .width(Length::Fixed(24.0 * base_size))
                         .height(Length::Fixed(24.0 * base_size)),
                     container(column![
@@ -275,7 +276,7 @@ impl Taskbar {
                         tooltip::Position::FollowCursor
                 ),
                 tooltip(
-                    canvas(WifiIcon {id:"Taskbar".to_string(), cache: icon_cache.clone(),status: wifi_status.clone()})
+                    image(wifi_icon(app_image_cache.clone(),wifi_status.clone()))
                     .width(Length::Fixed(24.0 * base_size))
                     .height(Length::Fixed(24.0 * base_size)),
                     container(column![

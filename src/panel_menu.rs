@@ -1,12 +1,13 @@
-use std::any::Any;
 use std::collections::BTreeMap;
 use std::ops::RangeInclusive;
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use iced::{window, Alignment, Element, Length, Pixels, Point, Size, Task};
-use iced::widget::{canvas, row, text, column, slider, button, space};
+use iced::advanced::image::Handle;
+use iced::widget::{row, text, column, slider, button, space, image};
 use iced::widget::text::Wrapping;
-use crate::icons::{BatteryIcon, FrostwinIcons, VolumeIcon, WifiIcon};
 use crate::Message;
+use crate::raw_icons::{battery_icon, sound_icon, wifi_icon};
 use crate::styles::{my_slider, transparent_button};
 use crate::sys_util::WifiStatus;
 
@@ -55,12 +56,12 @@ impl PanelMenu {
             }
         }
     }
-    pub fn view(&self, icon_cache: Arc<Mutex<BTreeMap<FrostwinIcons,Box<dyn Any>>>>,base_size: f32,battery: Option<(f32,bool)>,wifi_status: WifiStatus, system_volume: f32, volume_muted: bool) -> Element<'_, Message> {
+    pub fn view(&self, app_image_cache: Arc<Mutex<BTreeMap<PathBuf,Handle>>>,base_size: f32,battery: Option<(f32,bool)>,wifi_status: WifiStatus, system_volume: f32, volume_muted: bool) -> Element<'_, Message> {
         let spacing = base_size * 2.0;
         let text_height = 30.0 * base_size;
         let battery_icon: Element<Message> = if let Some((battery_level,charging)) = battery {
             column![
-                canvas(BatteryIcon {id:"Panel".to_string(), cache: icon_cache.clone(), charging,level: battery_level})
+                image(battery_icon(app_image_cache.clone(), charging, battery_level))
                             .width(Length::Fixed(36.0 * base_size))
                             .height(Length::Fixed(36.0 * base_size)),
                 text!("{}%",battery_level.round())
@@ -72,7 +73,7 @@ impl PanelMenu {
             column![
                 row![
                     button(
-                    canvas(VolumeIcon {id:"Panel".to_string(), cache: icon_cache.clone(), volume: system_volume, muted: volume_muted}).width(Length::Fill).height(Length::Fill),
+                    image(sound_icon(app_image_cache.clone(),system_volume, volume_muted)).width(Length::Fill).height(Length::Fill),
                     ).width(Length::Fixed(36.0 * base_size))
                     .height(Length::Fixed(36.0 * base_size))
                     .style(transparent_button)
@@ -91,7 +92,7 @@ impl PanelMenu {
             ].width(Length::FillPortion(4)).height(Length::Fill).spacing(spacing),
             column![
                 battery_icon,
-                canvas(WifiIcon {id:"Panel".to_string(), cache: icon_cache.clone(), status: wifi_status.clone()})
+                image(wifi_icon(app_image_cache.clone(),wifi_status.clone()))
                             .width(Length::Fixed(36.0 * base_size))
                             .height(Length::Fixed(36.0 * base_size)),
                 text!("{}", match wifi_status.clone() {

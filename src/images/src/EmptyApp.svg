@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   width="100"
+   height="100"
+   viewBox="0 0 100 100"
+   version="1.1"
+   xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .stroke {
+      stroke: #ccccccff;
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: #ccccccff;
+    }
+    .stroke2 {
+    stroke: #3333ccff;
+    stroke-width: 8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: #3333ccff;
+    }
+    .stroke3 {
+    stroke: #808080ff;
+    stroke-width: 8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: #00000000;
+    }
+  </style>
+  <rect x="6" y="12" width="88" height="76" class="stroke"></rect>
+  <rect x="14" y="20" width="30" height="32" class="stroke2"></rect>
+  <path d="M 56 20 L 86 20 M 56 45 L 86 45 M 14 70 L 86 70" class="stroke3"></path>
+</svg>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   width="100"
+   height="100"
+   viewBox="0 0 100 100"
+   version="1.1"
+   xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .stroke_strong {
+      stroke: #ccccccff;
+      stroke-width: 8px;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: #00000000;
+    }
+    .stroke_weak {
+      stroke: #808080ff;
+      stroke-width: 8px;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: #00000000;
+    }
+  </style>
+  <g id="wifi_connected">
+    <path d="M 6.41 24.46 A 96 96 0 0 1 93.58 24.46" class="stroke_strong"></path>
+    <path d="M 17.31 45.84 A 72 72 0 0 1 82.68 45.84" class="stroke_strong"></path>
+    <path d="M 28.20 67.23 A 48 48 0 0 1 71.79 67.23" class="stroke_strong"></path>
+    <path d="M 39.10 88.61 A 24 24 0 0 1 60.89 88.61" class="stroke_strong"></path>
+  </g>
+  <g id="no_wifi">
+    <path d="M 6.0 14.0 L 94.0 86.0 M 94.0 14.0 L 6.0 86.0" class="stroke_strong"></path>
+  </g>
+  <g id="no_internet">
+    <circle cx="50" cy="50" r="44" class="stroke_weak"></circle>
+    <path d="M 55.0 7.00 A 70 70 0 0 1 55.0 93.0 M 45.0 7.0 A 70 70 0 0 0 45.0 93.0 M 10.0 33.3 L 90.0 33.3 M 10.0 66.6 L 90.0 66.6" class="stroke_weak"></path>
+  </g>
+  <g id="ethernet">
+    <path d="M 33.3 6.0 L 66.6 6.0 L 66.6 25.0 L 94.0 25.0 L 94.0 86.0 L 6.0 86.0 L 6.0 25.0 L 33.3 25.0 Z M 20.66 46.0 L 20.66 86.0 M 35.33 46.0 L 35.33 86.0 M 50.0 46.0 L 50.0 86.0 M 64.67 46.0 L 64.67 86.0 M 79.33 46.0 L 79.33 86.0" class="stroke_strong"></path>
+  </g>
+</svg>

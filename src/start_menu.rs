@@ -1,4 +1,3 @@
-use crate::icons::*;
 use crate::power_window::PowerOptions;
 use crate::styles::{colored_button, context_menu_button, transparent_button};
 use crate::windows_icons::get_lnk_icon;
@@ -6,11 +5,10 @@ use crate::Message;
 use dirs::data_dir;
 use iced::advanced::text::Wrapping;
 use iced::widget::image::Handle;
-use iced::widget::{button, canvas, column, container, image, row, rule, scrollable, space, text, Button, Column, Grid, Text};
+use iced::widget::{button, column, container, image, row, rule, scrollable, space, text, Button, Column, Grid, Text};
 use iced::{window, Alignment, Color, ContentFit, Element, Length, Padding, Point, Size, Task};
 use iced_aw::context_menu::ContextMenu;
 use serde_json::{from_str, to_string_pretty};
-use std::any::Any;
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::process::Command;
@@ -277,11 +275,48 @@ impl StartMenu {
             }
         }
     }
-    pub fn view(&self, icon_cache: Arc<Mutex<BTreeMap<FrostwinIcons,Box<dyn Any>>>>, app_image_cache: Arc<Mutex<BTreeMap<PathBuf,Handle>>>,base_size: f32) -> Element<'_, Message> {
+    pub fn view(&self, app_image_cache: Arc<Mutex<BTreeMap<PathBuf,Handle>>>,base_size: f32) -> Element<'_, Message> {
         let text_height = 30.0 * base_size;
         let spacing = 2.0 * base_size;
         let mut tab_content: Column<Message> = Column::new();
         let header: Text;
+        let (
+            lock_button,
+            restart_button,
+            shutdown_button,
+            empty_app,
+        ) = match (app_image_cache.lock(),data_dir()) {
+            (Ok(app_image_lock),Some(data_dir)) => {
+                let data_folder = data_dir.join("Frostwin");
+                let error_handle = Handle::from_rgba(1,1,vec![255u8,0u8,0u8,255u8]);
+                (
+                    app_image_lock.get(&data_folder.join("icons/power/Lock.png")).unwrap_or(&error_handle).clone(),
+                    app_image_lock.get(&data_folder.join("icons/power/Restart.png")).unwrap_or(&error_handle).clone(),
+                    app_image_lock.get(&data_folder.join("icons/power/Shutdown.png")).unwrap_or(&error_handle).clone(),
+                    app_image_lock.get(&data_folder.join("icons/EmptyApp.png")).unwrap_or(&error_handle).clone(),
+                )
+            }
+            (Err(error),_) => {
+                eprintln!("Error getting app image cache: {}", error);
+                let error_handle = Handle::from_rgba(1,1,vec![255u8,0u8,0u8,255u8]);
+                (
+                    error_handle.clone(),
+                    error_handle.clone(),
+                    error_handle.clone(),
+                    error_handle.clone(),
+                )
+            }
+            (_,None) => {
+                eprintln!("Error getting data directory");
+                let error_handle = Handle::from_rgba(1,1,vec![255u8,0u8,0u8,255u8]);
+                (
+                    error_handle.clone(),
+                    error_handle.clone(),
+                    error_handle.clone(),
+                    error_handle.clone(),
+                )
+            }
+        };
         match self.tab {
             StartMenuTab::Tiles => {
                 header = text!("Tiles").size(text_height * 1.3);
@@ -294,10 +329,10 @@ impl StartMenu {
                                     image(app_image).height(Length::Fixed(text_height * 2.0)).width(Length::Fixed(text_height * 2.0)).content_fit(ContentFit::Fill).into()
                                 } else {
                                     eprintln!("Error getting app_image");
-                                    canvas(EmptyApp {id: format!("Tiles,{}",path.to_string_lossy()), cache: icon_cache.clone()}).height(Length::Fixed(text_height * 2.0)).width(Length::Fixed(text_height * 2.0)).into()
+                                    image(empty_app.clone()).into()
                                 }
                             } else {
-                                canvas(EmptyApp {id: format!("Tiles,{}",path.to_string_lossy()), cache: icon_cache.clone()}).height(Length::Fixed(text_height * 2.0)).width(Length::Fixed(text_height * 2.0)).into()
+                                image(empty_app.clone()).into()
                             };
                             let name = if let Some(app_name) = path.file_stem() {
                                 if let Some(app_name_str) = app_name.to_str() {
@@ -346,7 +381,7 @@ impl StartMenu {
                     let mut path: Vec<String> = Vec::new();
                     path.push(key.clone());
                     if let Some(item) = self.content.get(key) {
-                        tab_content = tab_content.push(item.view(icon_cache.clone(),app_image_cache.clone(),base_size.clone(), path))
+                        tab_content = tab_content.push(item.view(app_image_cache.clone(),base_size.clone(), path))
                     }
                 }
             }
@@ -384,21 +419,21 @@ impl StartMenu {
                 space().width(Length::Fixed(text_height)),
                 space().width(Length::Fill),
                 button(
-                    canvas(LockButton {id: "StartMenu".to_string(),cache: icon_cache.clone()})
+                    image(lock_button)
                 ).height(Length::Fixed(text_height))
                 .width(Length::Fixed(text_height))
                 .padding(0.0)
                 .style(|theme, status| colored_button(theme, status, Color::from_rgb(0.2, 0.2, 0.7)))
                 .on_press(Message::OpenPowerWindow(PowerOptions::Lock)),
                 button(
-                    canvas(RestartButton {id: "StartMenu".to_string(),cache: icon_cache.clone()})
+                    image(restart_button)
                 ).height(Length::Fixed(text_height))
                 .width(Length::Fixed(text_height))
                 .padding(0.0)
                 .style(|theme, status| colored_button(theme, status, Color::from_rgb(0.2, 0.7, 0.2)))
                 .on_press(Message::OpenPowerWindow(PowerOptions::Reboot)),
                 button(
-                    canvas(PowerButton {id: "StartMenu".to_string(),cache: icon_cache.clone()})
+                    image(shutdown_button)
                 ).height(Length::Fixed(text_height))
                 .width(Length::Fixed(text_height))
                 .padding(0.0)
@@ -501,17 +536,50 @@ impl StartItem {
             _ => {}
         }
     }
-    pub fn view(&self, icon_cache: Arc<Mutex<BTreeMap<FrostwinIcons,Box<dyn Any>>>>, app_image_cache: Arc<Mutex<BTreeMap<PathBuf,Handle>>>, base_size: f32, path: Vec<String>) -> Element<'_, Message> {
+    pub fn view(&self, app_image_cache: Arc<Mutex<BTreeMap<PathBuf,Handle>>>, base_size: f32, path: Vec<String>) -> Element<'_, Message> {
         let text_half_height = 15.0 * base_size;
         let spacing = 2.0 * base_size;
         let mut head: Column<Message> = Column::new();
+        let (
+            empty_app,
+            folder,
+            tree_dot,
+        ) = match (app_image_cache.lock(),data_dir()) {
+            (Ok(app_image_lock),Some(data_dir)) => {
+                let data_folder = data_dir.join("Frostwin");
+                let error_handle = Handle::from_rgba(1,1,vec![255u8,0u8,0u8,255u8]);
+                (
+                    app_image_lock.get(&data_folder.join("icons/EmptyApp.png")).unwrap_or(&error_handle).clone(),
+                    app_image_lock.get(&data_folder.join("icons/Folder.png")).unwrap_or(&error_handle).clone(),
+                    app_image_lock.get(&data_folder.join("icons/TreeDot.png")).unwrap_or(&error_handle).clone(),
+                )
+            }
+            (Err(error),_) => {
+                eprintln!("Error getting app image cache: {}", error);
+                let error_handle = Handle::from_rgba(1,1,vec![255u8,0u8,0u8,255u8]);
+                (
+                    error_handle.clone(),
+                    error_handle.clone(),
+                    error_handle.clone(),
+                )
+            }
+            (_,None) => {
+                eprintln!("Error getting data directory");
+                let error_handle = Handle::from_rgba(1,1,vec![255u8,0u8,0u8,255u8]);
+                (
+                    error_handle.clone(),
+                    error_handle.clone(),
+                    error_handle.clone(),
+                )
+            }
+        };
         if let Some(content) = self.content.as_ref() && let Some(keys) = self.sorted.as_ref() {
             if !content.is_empty() && !keys.is_empty() {
                 head = head.push(
                     button(
                         row![
-                            canvas(TreeDot {id: path.join("/"), cache: icon_cache.clone()}).height(text_half_height).width(text_half_height),
-                            canvas(FolderButton {id: path.join("/"), cache: icon_cache.clone()}).height(text_half_height).width(text_half_height),
+                            image(tree_dot).height(text_half_height).width(text_half_height),
+                            image(folder).height(text_half_height).width(text_half_height),
                             space().width(Length::Fixed(spacing)),
                             text!("{}",self.name).size(text_half_height).height(Length::Fixed(text_half_height)).align_y(Alignment::Center),
                         ].align_y(Alignment::Center)
@@ -525,7 +593,7 @@ impl StartItem {
                         new_path.insert(0,key.clone());
                         if let Some(item) = content.get(key) {
                             children = children.push(
-                                item.view(icon_cache.clone(), app_image_cache.clone(), base_size.clone(), new_path)
+                                item.view(app_image_cache.clone(), base_size.clone(), new_path)
                             );
                         }
                     };
@@ -546,21 +614,21 @@ impl StartItem {
                         if let Some(image) = app_image_lock.get(&self.path) {
                             iced::widget::image(image).height(text_half_height).width(text_half_height).content_fit(ContentFit::Fill).into()
                         } else {
-                            canvas(EmptyApp {id: path.join("/"), cache: icon_cache.clone()}).height(text_half_height).width(text_half_height).into()
+                            image(empty_app).height(text_half_height).width(text_half_height).into()
                         }
                     } else {
-                        canvas(EmptyApp {id: path.join("/"), cache: icon_cache.clone()}).height(text_half_height).width(text_half_height).into()
+                        image(empty_app).height(text_half_height).width(text_half_height).into()
                     }
                 }
                 Err(e) => {
                     eprintln!("Error getting app_image_cache: {}", e);
-                    canvas(EmptyApp {id: path.join("/"), cache: icon_cache.clone()}).height(text_half_height).width(text_half_height).into()
+                    image(empty_app).height(text_half_height).width(text_half_height).into()
                 }
             };
             let context_menu = ContextMenu::new(
                 button(
                     row![
-                        canvas(TreeDot {id: path.join("/"), cache: icon_cache.clone()}).height(text_half_height).width(text_half_height),
+                        image(tree_dot).height(text_half_height).width(text_half_height),
                         icon,
                         space().width(Length::Fixed(spacing)),
                         text!("{}",self.name).size(text_half_height).height(Length::Fixed(text_half_height)).align_y(Alignment::Center)
