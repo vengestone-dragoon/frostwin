@@ -2,7 +2,7 @@ use crate::sys_util::WifiStatus;
 use iced::mouse::Cursor;
 use iced::widget::canvas;
 use iced::widget::canvas::path::Arc;
-use iced::widget::canvas::{Geometry, LineCap, Stroke};
+use iced::widget::canvas::{Geometry, LineCap, LineJoin, Stroke};
 use iced::{border, Point, Radians, Size};
 use iced::{Color, Rectangle, Renderer, Theme};
 use std::any::Any;
@@ -95,15 +95,15 @@ impl<Message> canvas::Program<Message> for StartLogo {
                 square_size,
                 square_border);
             if self.open {
-                frame.fill(&square1,Color::from_rgb(0.9, 0.2, 0.2));
-                frame.fill(&square2,Color::from_rgb(0.2, 0.9, 0.2));
-                frame.fill(&square3,Color::from_rgb(0.2, 0.2, 0.9));
-                frame.fill(&square4,Color::from_rgb(0.9, 0.9, 0.2));
+                frame.fill(&square1,Color::from_rgb(0.8, 0.2, 0.2));
+                frame.fill(&square2,Color::from_rgb(0.2, 0.8, 0.2));
+                frame.fill(&square3,Color::from_rgb(0.2, 0.2, 0.8));
+                frame.fill(&square4,Color::from_rgb(0.8, 0.8, 0.2));
             } else {
-                frame.fill(&square1,Color::from_rgb(0.3, 0.5, 0.9));
-                frame.fill(&square2,Color::from_rgb(0.3, 0.5, 0.9));
-                frame.fill(&square3,Color::from_rgb(0.3, 0.5, 0.9));
-                frame.fill(&square4,Color::from_rgb(0.3, 0.5, 0.9));
+                frame.fill(&square1,Color::from_rgb(0.3, 0.5, 0.8));
+                frame.fill(&square2,Color::from_rgb(0.3, 0.5, 0.8));
+                frame.fill(&square3,Color::from_rgb(0.3, 0.5, 0.8));
+                frame.fill(&square4,Color::from_rgb(0.3, 0.5, 0.8));
             }
         });
         vec![geometry]
@@ -123,7 +123,7 @@ impl<Message> canvas::Program<Message> for DropDownIcon {
         ).downcast_mut().unwrap();
         let geometry = icon_cache.get(self.open).draw(renderer, bounds.size(), |frame| {
             let base_size = frame.height() / 100.0;
-            let stroke = Stroke::default().with_color(Color::from_rgb(0.9, 0.9, 0.9)).with_width(8.0 * base_size).with_line_cap(LineCap::Round);
+            let stroke = Stroke::default().with_color(Color::from_rgb(0.8, 0.8, 0.8)).with_width(8.0 * base_size).with_line_cap(LineCap::Round);
             let path = canvas::Path::new(|p| {
                 if self.open {
                     p.move_to(Point::from([15.0 * base_size,33.3 * base_size]));
@@ -154,13 +154,13 @@ impl<Message> canvas::Program<Message> for PowerButton {
         ).downcast_mut().unwrap();
         let geometry = icon_cache.get(true).draw(renderer, bounds.size(), |frame| {
             let base_size = frame.height() / 100.0;
-            let stroke = Stroke::default().with_color(Color::from_rgb(0.9, 0.9, 0.9)).with_width(8.0 * base_size).with_line_cap(LineCap::Round);
+            let stroke = Stroke::default().with_color(Color::from_rgb(0.8, 0.8, 0.8)).with_width(8.0 * base_size).with_line_cap(LineCap::Round);
             let circle = canvas::Path::circle(
                 Point::from([50.0 * base_size, 50.0 * base_size]),
                 33.3 * base_size,
             );
             let line = canvas::Path::line(
-                Point::from([50.0 * base_size, 4.0 * base_size]),
+                Point::from([50.0 * base_size, 6.0 * base_size]),
                 Point::from([50.0 * base_size, 33.3 * base_size]),
             );
             frame.stroke(&circle, stroke);
@@ -184,18 +184,18 @@ impl<Message> canvas::Program<Message> for RestartButton {
         ).downcast_mut().unwrap();
         let geometry = icon_cache.get(true).draw(renderer, bounds.size(), |frame| {
             let base_size = frame.height() / 100.0;
-            let stroke = Stroke::default().with_color(Color::from_rgb(0.9, 0.9, 0.9)).with_width(8.0 * base_size).with_line_cap(LineCap::Round);
+            let stroke = Stroke::default().with_color(Color::from_rgb(0.8, 0.8, 0.8)).with_width(8.0 * base_size).with_line_cap(LineCap::Round);
             let circle = canvas::Path::circle(
                 Point::from([50.0 * base_size, 50.0 * base_size]),
                 33.3 * base_size,
             );
             let line = canvas::Path::line(
-                Point::from([58.0 * base_size, 4.0 * base_size]),
+                Point::from([58.0 * base_size, 6.0 * base_size]),
                 Point::from([42.0 * base_size, 16.7 * base_size])
             );
             let line2 = canvas::Path::line(
                 Point::from([42.0 * base_size, 16.7 * base_size]),
-                Point::from([58.0 * base_size, 33.3 * base_size])
+                Point::from([58.0 * base_size, 31.3 * base_size])
             );
             frame.stroke(&circle, stroke);
             frame.stroke(&line, stroke);
@@ -218,7 +218,7 @@ impl<Message> canvas::Program<Message> for LockButton {
         ).downcast_mut().unwrap();
         let geometry = icon_cache.get(true).draw(renderer, bounds.size(), |frame| {
             let base_size = frame.height() / 100.0;
-            let stroke = Stroke::default().with_color(Color::from_rgb(0.9, 0.9, 0.9)).with_width(8.0 * base_size).with_line_cap(LineCap::Round);
+            let stroke = Stroke::default().with_color(Color::from_rgb(0.8, 0.8, 0.8)).with_width(8.0 * base_size).with_line_cap(LineCap::Round);
             let arc = canvas::Path::new(|builder| {
                 builder.arc(Arc {
                     center: Point::from([50.0 * base_size,50.0 * base_size]),
@@ -232,7 +232,7 @@ impl<Message> canvas::Program<Message> for LockButton {
                 Size::from([66.6 * base_size,33.3 * base_size]),
             );
             let line = canvas::Path::line(
-                Point::from([50.0 * base_size, 58.0 * base_size]),
+                Point::from([50.0 * base_size, 60.0 * base_size]),
                 Point::from([50.0 * base_size, 82.0 * base_size])
             );
             frame.stroke(&arc, stroke);
@@ -257,7 +257,7 @@ impl<Message> canvas::Program<Message> for LogoffButton {
         ).downcast_mut().unwrap();
         let geometry = icon_cache.get(true).draw(renderer, bounds.size(), |frame| {
             let base_size = frame.height() / 100.0;
-            let stroke = Stroke::default().with_color(Color::from_rgb(0.9, 0.9, 0.9)).with_width(8.0 * base_size).with_line_cap(LineCap::Round);
+            let stroke = Stroke::default().with_color(Color::from_rgb(0.8, 0.8, 0.8)).with_width(8.0 * base_size).with_line_cap(LineCap::Round);
 
             let arrow = canvas::Path::new(|builder| {
                 builder.move_to(Point::from([86.0 * base_size, 33.3 * base_size]));
@@ -290,7 +290,7 @@ impl<Message> canvas::Program<Message> for CancelButton {
         ).downcast_mut().unwrap();
         let geometry = icon_cache.get(true).draw(renderer, bounds.size(), |frame| {
             let base_size = frame.height() / 100.0;
-            let stroke = Stroke::default().with_color(Color::from_rgb(0.9, 0.9, 0.9)).with_width(8.0 * base_size).with_line_cap(LineCap::Round);
+            let stroke = Stroke::default().with_color(Color::from_rgb(0.8, 0.8, 0.8)).with_width(8.0 * base_size).with_line_cap(LineCap::Round);
             let circle = canvas::Path::circle(
                 Point::from([50.0 * base_size, 50.0 * base_size]),
                 33.3 * base_size,
@@ -325,16 +325,26 @@ impl<Message> canvas::Program<Message> for FolderButton {
         ).downcast_mut().unwrap();
         let geometry = icon_cache.get(true).draw(renderer, bounds.size(), |frame| {
             let base_size = frame.height() / 100.0;
-            let rectangle = canvas::Path::rectangle(
-                Point::from([2.0 * base_size, 8.0 * base_size]),
-                Size::from([96.0 * base_size,90.0 * base_size]),
-            );
-            let line = canvas::Path::line(
-                Point::from([70.0 * base_size, 4.0 * base_size]),
-                Point::from([90.0 * base_size, 4.0 * base_size])
-            );
-            frame.fill(&rectangle, Color::from_rgb(0.7, 0.7, 0.2));
-            frame.stroke(&line, Stroke::default().with_line_cap(LineCap::Round).with_width(base_size * 16.0).with_color(Color::from_rgb(0.7,0.7,0.2)));
+            let folder_back = canvas::Path::new(|builder| {
+                builder.move_to(Point::from([24.0 * base_size, 14.0 * base_size]));
+                builder.line_to(Point::from([74.0 * base_size, 14.0 * base_size]));
+                builder.line_to(Point::from([74.0 * base_size, 6.0 * base_size]));
+                builder.line_to(Point::from([94.0 * base_size, 6.0 * base_size]));
+                builder.line_to(Point::from([94.0 * base_size, 94.0 * base_size]));
+                builder.line_to(Point::from([24.0 * base_size, 94.0 * base_size]));
+                builder.close()
+            });
+            let folder_front = canvas::Path::new(|builder| {
+                builder.move_to(Point::from([6.0 * base_size, 23.3 * base_size]));
+                builder.line_to(Point::from([76.0 * base_size, 23.3 * base_size]));
+                builder.line_to(Point::from([94.0 * base_size, 94.0 * base_size]));
+                builder.line_to(Point::from([24.0 * base_size, 94.0 * base_size]));
+                builder.close()
+            });
+            frame.fill(&folder_back, Color::from_rgb(0.8, 0.8, 0.2));
+            frame.stroke(&folder_back, Stroke::default().with_color(Color::from_rgb(0.8, 0.8, 0.2)).with_width(8.0 * base_size).with_line_cap(LineCap::Round).with_line_join(LineJoin::Round));
+            frame.fill(&folder_front, Color::from_rgb(0.6, 0.6, 0.2));
+            frame.stroke(&folder_front, Stroke::default().with_color(Color::from_rgb(0.6, 0.6, 0.2)).with_width(8.0 * base_size).with_line_cap(LineCap::Round).with_line_join(LineJoin::Round));
         });
         vec![geometry]
     }
@@ -356,7 +366,7 @@ impl<Message> canvas::Program<Message> for TreeDot {
                 Point::from([50.0 * base_size, 50.0 * base_size]),
                 25.0 * base_size,
             );
-            frame.fill(&circle, Color::from_rgb(0.9, 0.9, 0.9));
+            frame.fill(&circle, Color::from_rgb(0.8, 0.8, 0.8));
         });
         vec![geometry]
     }
@@ -374,17 +384,27 @@ impl<Message> canvas::Program<Message> for EmptyApp {
         ).downcast_mut().unwrap();
         let geometry = icon_cache.get(true).draw(renderer, bounds.size(), |frame| {
             let base_size = frame.height() / 100.0;
-            let rectangle = canvas::Path::rounded_rectangle(
-                Point::from([2.0 * base_size, 8.0 * base_size]),
-                Size::from([96.0 * base_size,90.0 * base_size]),
-                border::radius(base_size * 15.0)
+            let rectangle = canvas::Path::rectangle(
+                Point::from([6.0 * base_size, 12.0 * base_size]),
+                Size::from([88.0 * base_size,76.0 * base_size])
             );
             let image = canvas::Path::rectangle(
-                Point::from([8.0 * base_size, 16.0 * base_size]),
-                Size::from([40.0 * base_size,40.0 * base_size]),
+                Point::from([14.0 * base_size, 20.0 * base_size]),
+                Size::from([30.0 * base_size,32.0 * base_size]),
             );
-            frame.fill(&rectangle, Color::from_rgb(0.9, 0.9, 0.9));
-            frame.fill(&image, Color::from_rgb(0.2, 0.2, 0.7));
+            let text = canvas::Path::new(|builder| {
+                builder.move_to(Point::from([56.0 * base_size, 20.0 * base_size]));
+                builder.line_to(Point::from([86.0 * base_size, 20.0 * base_size]));
+                builder.move_to(Point::from([56.0 * base_size, 45.0 * base_size]));
+                builder.line_to(Point::from([86.0 * base_size, 45.0 * base_size]));
+                builder.move_to(Point::from([14.0 * base_size, 70.0 * base_size]));
+                builder.line_to(Point::from([86.0 * base_size, 70.0 * base_size]));
+            });
+            frame.fill(&rectangle, Color::from_rgb(0.8, 0.8, 0.8));
+            frame.stroke(&rectangle, Stroke::default().with_color(Color::from_rgb(0.8, 0.8, 0.8)).with_width(8.0 * base_size).with_line_cap(LineCap::Round).with_line_join(LineJoin::Round));
+            frame.fill(&image, Color::from_rgb(0.2, 0.2, 0.8));
+            frame.stroke(&image, Stroke::default().with_color(Color::from_rgb(0.2, 0.2, 0.8)).with_width(8.0 * base_size).with_line_cap(LineCap::Round).with_line_join(LineJoin::Round));
+            frame.stroke(&text, Stroke::default().with_color(Color::from_rgb(0.5,0.5,0.5)).with_width(8.0 * base_size).with_line_cap(LineCap::Round).with_line_join(LineJoin::Round));
         });
         vec![geometry]
     }
@@ -402,19 +422,18 @@ impl<Message> canvas::Program<Message> for BatteryIcon {
         let icon_cache: &mut SmartCache<(bool,f32)> = cache_lock.entry(FrostwinIcons::BatteryIcon(self.id.clone())).or_insert(
             Box::new(SmartCache::<(bool,f32)>::new()) as Box<dyn Any>
         ).downcast_mut().unwrap();
-        let battery_percentage = 0.68 * (self.level / 5.0).round() * 5.0;
+        let battery_percentage = 0.68 * (self.level / 10.0).round() * 10.0;
         let geometry = icon_cache.get((self.charging,battery_percentage)).draw(renderer, bounds.size(), |frame| {
             let base_size = frame.height() / 100.0;
-            let stroke = Stroke::default().with_color(Color::from_rgb(0.9, 0.9, 0.9)).with_width(8.0 * base_size).with_line_cap(LineCap::Round);
+            let stroke = Stroke::default().with_color(Color::from_rgb(0.8, 0.8, 0.8)).with_width(8.0 * base_size).with_line_cap(LineCap::Round);
             let rectangle1 = canvas::Path::rounded_rectangle(
                 Point::from([12.0 * base_size,14.0 * base_size]),
                 Size::from([76.0 * base_size,80.0 * base_size]),
                 border::radius(base_size * 15.0)
             );
-            let rectangle2 = canvas::Path::rounded_rectangle(
-                Point::from([25.0 * base_size,5.0 * base_size]),
-                Size::from([50.0 * base_size,8.0 * base_size]),
-                border::radius(base_size * 5.0)
+            let line = canvas::Path::line(
+                Point::from([25.0 * base_size,8.0 * base_size]),
+                Point::from([75.0 * base_size,8.0 * base_size])
             );
             let power_level = canvas::Path::rounded_rectangle(
                 Point::from([18.0 * base_size, (88.0 - battery_percentage) * base_size]),
@@ -431,18 +450,18 @@ impl<Message> canvas::Program<Message> for BatteryIcon {
                 builder.close()
             });
             if self.charging {
-                frame.fill(&power_level, Color::from_rgb(0.2, 0.9, 0.2));
-                frame.fill(&charging_indicator, Color::from_rgb(0.9, 0.9, 0.9));
+                frame.fill(&power_level, Color::from_rgb(0.2, 0.8, 0.2));
+                frame.fill(&charging_indicator, Color::from_rgb(0.8, 0.8, 0.8));
             } else {
                 if battery_percentage > 15.0 {
-                    frame.fill(&power_level, Color::from_rgb(0.9, 0.9, 0.9));
+                    frame.fill(&power_level, Color::from_rgb(0.8, 0.8, 0.8));
                 } else {
-                    frame.fill(&power_level, Color::from_rgb(0.9, 0.2, 0.2));
+                    frame.fill(&power_level, Color::from_rgb(0.8, 0.2, 0.2));
                 }
             }
             frame.stroke(&rectangle1, stroke);
-            frame.fill(&rectangle2, Color::from_rgb(0.9, 0.9, 0.9));
-            frame.stroke(&rectangle2, stroke);
+            frame.fill(&line, Color::from_rgb(0.8, 0.8, 0.8));
+            frame.stroke(&line, stroke);
         });
 
         vec![geometry]
@@ -484,8 +503,8 @@ impl<Message> canvas::Program<Message> for WifiIcon {
         let geometry = icon_cache.get(strength).draw(renderer, bounds.size(), |frame| {
 
             let base_size = frame.height() / 100.0;
-            let stroke_strong = Stroke::default().with_color(Color::from_rgb(0.9, 0.9, 0.9)).with_width(8.0 * base_size).with_line_cap(LineCap::Round);
-            let stroke_weak = Stroke::default().with_color(Color::from_rgb(0.4, 0.4, 0.4)).with_width(8.0 * base_size).with_line_cap(LineCap::Round);
+            let stroke_strong = Stroke::default().with_color(Color::from_rgb(0.8, 0.8, 0.8)).with_width(8.0 * base_size).with_line_cap(LineCap::Round);
+            let stroke_weak = Stroke::default().with_color(Color::from_rgb(0.5, 0.5, 0.5)).with_width(8.0 * base_size).with_line_cap(LineCap::Round);
             let slice4 = canvas::Path::new(|builder| {
                 builder.arc(Arc {
                     center: Point::from([50.0 * base_size,110.0 * base_size]),
@@ -583,10 +602,10 @@ impl<Message> canvas::Program<Message> for VolumeIcon {
         ).downcast_mut().unwrap();
         let geometry = icon_cache.get((self.muted,volume)).draw(renderer, bounds.size(), |frame| {
             let base_size = frame.height() / 100.0;
-            let stroke = Stroke::default().with_color(Color::from_rgb(0.9, 0.9, 0.9)).with_width(8.0 * base_size).with_line_cap(LineCap::Round);
+            let stroke = Stroke::default().with_color(Color::from_rgb(0.8, 0.8, 0.8)).with_width(8.0 * base_size).with_line_cap(LineCap::Round).with_line_join(LineJoin::Round);
             let speaker = canvas::Path::new(|builder| {
-                builder.move_to(Point::from([5.0 * base_size,33.3 * base_size]));
-                builder.line_to(Point::from([5.0 * base_size,66.6 * base_size]));
+                builder.move_to(Point::from([6.0 * base_size,33.3 * base_size]));
+                builder.line_to(Point::from([6.0 * base_size,66.6 * base_size]));
                 builder.line_to(Point::from([18.0 * base_size,66.6 * base_size]));
                 builder.line_to(Point::from([33.3 * base_size,86.0 * base_size]));
                 builder.line_to(Point::from([33.3 * base_size,14.0 * base_size]));
@@ -601,22 +620,22 @@ impl<Message> canvas::Program<Message> for VolumeIcon {
                     end_angle: Radians(2.15 * PI)
                 };
                 if volume >= 1 {
-                    builder.arc(Arc {radius: 51.0 * base_size, ..base})
+                    builder.arc(Arc {radius: 49.0 * base_size, ..base})
                 }
                 if volume >= 2 {
-                    builder.arc(Arc {radius: 66.0 * base_size, ..base})
+                    builder.arc(Arc {radius: 64.0 * base_size, ..base})
                 }
                 if volume >= 3 {
-                    builder.arc(Arc {radius: 81.0 * base_size, ..base})
+                    builder.arc(Arc {radius: 79.0 * base_size, ..base})
                 }
                 if volume >= 4 {
-                    builder.arc(Arc {radius: 96.0 * base_size, ..base})
+                    builder.arc(Arc {radius: 94.0 * base_size, ..base})
                 }
             });
             let mute = canvas::Path::new(|builder| {
                 builder.move_to(Point::from([43.3 * base_size, 14.0 * base_size]));
-                builder.line_to(Point::from([96.0 * base_size, 86.0 * base_size]));
-                builder.move_to(Point::from([96.0 * base_size, 14.0 * base_size]));
+                builder.line_to(Point::from([94.0 * base_size, 86.0 * base_size]));
+                builder.move_to(Point::from([94.0 * base_size, 14.0 * base_size]));
                 builder.line_to(Point::from([43.3 * base_size, 86.0 * base_size]));
             });
             frame.stroke(&speaker, stroke);
