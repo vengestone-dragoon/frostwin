@@ -186,7 +186,7 @@ pub fn set_sound_state(level: f32, mute: bool) -> Result<()> {
     }
 }
 
-pub fn windows_power(reboot: bool) -> windows::core::Result<()> {
+pub fn windows_power(reboot: bool) -> Result<()> {
     unsafe {
         // --- Step 1: Get the process token ---
         let mut token_handle = HANDLE::default();
@@ -231,12 +231,12 @@ pub fn windows_power(reboot: bool) -> windows::core::Result<()> {
     Ok(())
 }
 
-pub fn logoff() -> windows::core::Result<()> {
+pub fn logoff() -> Result<()> {
     unsafe {
         ExitWindowsEx(EWX_LOGOFF, SHTDN_REASON_MINOR_NONE | SHTDN_REASON_FLAG_PLANNED)
     }
 }
-pub fn lock() -> windows::core::Result<()> {
+pub fn lock() -> Result<()> {
     unsafe {
         windows::Win32::System::Shutdown::LockWorkStation()
     }

@@ -1,15 +1,13 @@
 use crate::styles::colored_button;
 use crate::Message;
-use iced::widget::{button, canvas, column, container, image, row, text};
+use iced::widget::{button, column, container, image, row, text};
 use iced::{window, Alignment, Color, Element, Length, Size, Task};
-use std::any::Any;
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
 use dirs::data_dir;
 use iced::advanced::image::Handle;
-use iced::futures::future::err;
 use crate::raw_icons::start_icon;
 use crate::sys_util::{lock, logoff, windows_power};
 

@@ -338,7 +338,7 @@ impl StartMenu {
                                 if let Some(app_name_str) = app_name.to_str() {
                                     app_name_str.to_string()
                                 } else {
-                                    eprintln!("Error: faild to get App name into str");
+                                    eprintln!("Error: failed to get App name into str");
                                     "".to_string()
                                 }
                             } else {

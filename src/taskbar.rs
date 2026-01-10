@@ -164,7 +164,7 @@ impl Taskbar {
                                         match base64::engine::general_purpose::STANDARD.decode(base64_data) {
                                             Ok(bytes) => {
                                                 println!("Successfully decoded {} bytes", bytes.len());
-                                                let image_handle = image::Handle::from_bytes(bytes);
+                                                let image_handle = Handle::from_bytes(bytes);
                                                 tasks.push(image::allocate(image_handle).map(move |result|{
                                                     match result {
                                                         Ok(allocation) => Message::Taskbar(TaskbarMessage::Allocate(window.id,(Some(allocation),window.clone()))),

@@ -21,7 +21,6 @@ use iced::time::{self, milliseconds};
 use iced::widget::column;
 use iced::widget::image::Handle;
 use iced::{window, Size, Subscription, Task};
-use std::any::Any;
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
@@ -230,11 +229,11 @@ impl AppMain {
                 }
             }
             Message::VolumeChange(value) => {
-                set_sound_state(value, self.volume_muted);
+                set_sound_state(value, self.volume_muted).unwrap_or_default();
                 Task::none()
             }
             Message::VolumeMute => {
-                set_sound_state(self.system_volume, !self.volume_muted);
+                set_sound_state(self.system_volume, !self.volume_muted).unwrap_or_default();
                 Task::none()
             }
             Message::Tick(_) => {
