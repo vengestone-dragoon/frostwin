@@ -1,5 +1,5 @@
 use crate::power_window::PowerOptions;
-use crate::styles::{colored_button, context_menu_button, transparent_button};
+use crate::styles::{colored_button, context_menu_button, transparent_button, window_style};
 use crate::windows_icons::get_lnk_icon;
 use crate::Message;
 use dirs::data_dir;
@@ -386,66 +386,68 @@ impl StartMenu {
                 }
             }
         };
-        column![
-            row![
-                column![
-                    button("Tiles").on_press(Message::StartMenu(StartMessage::SwitchToTab(StartMenuTab::Tiles)))
-                    .style(transparent_button)
-                    .width(Length::Fill),
-                    button("Applications").on_press(Message::StartMenu(StartMessage::SwitchToTab(StartMenuTab::Applications)))
-                    .style(transparent_button)
-                    .width(Length::Fill),
-                ].width(Length::FillPortion(3))
-                .height(Length::Fill),
-                rule::vertical(spacing),
-                column![
-                    header.align_y(Alignment::Center)
-                    .align_x(Alignment::Center)
-                    .width(Length::Fill)
-                    .height(Length::FillPortion(1)),
-                    rule::horizontal(spacing),
-                    scrollable(
-                        tab_content.width(Length::Fill)
-                        .padding(spacing)
-                        .spacing(spacing)
-                    ).width(Length::FillPortion(9))
-                    .height(Length::FillPortion(9)),
-                ].width(Length::FillPortion(9))
-                .height(Length::Fill),
-            ].width(Length::Fill)
-            .height(Length::FillPortion(7)),
-            rule::horizontal(spacing),
-            row![
-                space().width(Length::Fixed(text_height)),
-                space().width(Length::Fill),
-                button(
-                    image(lock_button)
-                ).height(Length::Fixed(text_height))
-                .width(Length::Fixed(text_height))
-                .padding(0.0)
-                .style(|theme, status| colored_button(theme, status, Color::from_rgb(0.2, 0.2, 0.7)))
-                .on_press(Message::OpenPowerWindow(PowerOptions::Lock)),
-                button(
-                    image(restart_button)
-                ).height(Length::Fixed(text_height))
-                .width(Length::Fixed(text_height))
-                .padding(0.0)
-                .style(|theme, status| colored_button(theme, status, Color::from_rgb(0.2, 0.7, 0.2)))
-                .on_press(Message::OpenPowerWindow(PowerOptions::Reboot)),
-                button(
-                    image(shutdown_button)
-                ).height(Length::Fixed(text_height))
-                .width(Length::Fixed(text_height))
-                .padding(0.0)
-                .style(|theme, status| colored_button(theme, status, Color::from_rgb(0.7, 0.2, 0.2)))
-                .on_press(Message::OpenPowerWindow(PowerOptions::Shutdown)),
-                space().width(Length::Fixed(text_height)),
-            ].width(Length::Fill)
-            .height(Length::FillPortion(1))
-            .align_y(Alignment::Center)
-            .spacing(spacing)
-            .padding(spacing),
-        ].into()
+        container(
+            column![
+                row![
+                    column![
+                        button("Tiles").on_press(Message::StartMenu(StartMessage::SwitchToTab(StartMenuTab::Tiles)))
+                        .style(transparent_button)
+                        .width(Length::Fill),
+                        button("Applications").on_press(Message::StartMenu(StartMessage::SwitchToTab(StartMenuTab::Applications)))
+                        .style(transparent_button)
+                        .width(Length::Fill),
+                    ].width(Length::FillPortion(3))
+                    .height(Length::Fill),
+                    rule::vertical(spacing),
+                    column![
+                        header.align_y(Alignment::Center)
+                        .align_x(Alignment::Center)
+                        .width(Length::Fill)
+                        .height(Length::FillPortion(1)),
+                        rule::horizontal(spacing),
+                        scrollable(
+                            tab_content.width(Length::Fill)
+                            .padding(spacing)
+                            .spacing(spacing)
+                        ).width(Length::FillPortion(9))
+                        .height(Length::FillPortion(9)),
+                    ].width(Length::FillPortion(9))
+                    .height(Length::Fill),
+                ].width(Length::Fill)
+                .height(Length::FillPortion(7)),
+                rule::horizontal(spacing),
+                row![
+                    space().width(Length::Fixed(text_height)),
+                    space().width(Length::Fill),
+                    button(
+                        image(lock_button)
+                    ).height(Length::Fixed(text_height))
+                    .width(Length::Fixed(text_height))
+                    .padding(0.0)
+                    .style(|theme, status| colored_button(theme, status, Color::from_rgb(0.2, 0.2, 0.7)))
+                    .on_press(Message::OpenPowerWindow(PowerOptions::Lock)),
+                    button(
+                        image(restart_button)
+                    ).height(Length::Fixed(text_height))
+                    .width(Length::Fixed(text_height))
+                    .padding(0.0)
+                    .style(|theme, status| colored_button(theme, status, Color::from_rgb(0.2, 0.7, 0.2)))
+                    .on_press(Message::OpenPowerWindow(PowerOptions::Reboot)),
+                    button(
+                        image(shutdown_button)
+                    ).height(Length::Fixed(text_height))
+                    .width(Length::Fixed(text_height))
+                    .padding(0.0)
+                    .style(|theme, status| colored_button(theme, status, Color::from_rgb(0.7, 0.2, 0.2)))
+                    .on_press(Message::OpenPowerWindow(PowerOptions::Shutdown)),
+                    space().width(Length::Fixed(text_height)),
+                ].width(Length::Fill)
+                .height(Length::FillPortion(1))
+                .align_y(Alignment::Center)
+                .spacing(spacing)
+                .padding(spacing),
+            ]
+        ).style(window_style).into()
     }
 }
 

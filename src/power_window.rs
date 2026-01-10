@@ -1,4 +1,4 @@
-use crate::styles::colored_button;
+use crate::styles::{colored_button, window_style};
 use crate::Message;
 use iced::widget::{button, column, container, image, row, text};
 use iced::{window, Alignment, Color, Element, Length, Size, Task};
@@ -239,7 +239,7 @@ impl PowerWindow {
                     .style(|theme, status| colored_button(theme, status, Color::from_rgb(0.4,0.4,0.4))),
                 ].spacing(2.0).height(Length::FillPortion(3))
             ].align_x(Alignment::Center),
-        ).style(container::transparent).align_x(Alignment::Center).align_y(Alignment::Center).width(Length::Fill).height(Length::Fill).into()
+        ).style(window_style).align_x(Alignment::Center).align_y(Alignment::Center).width(Length::Fill).height(Length::Fill).into()
 
     }
 }

@@ -1,4 +1,4 @@
-use crate::styles::transparent_button;
+use crate::styles::{transparent_button, window_style};
 use crate::sys_util::WifiStatus;
 use crate::Message;
 use base64::Engine;
@@ -250,55 +250,56 @@ impl Taskbar {
         } else {
             space().width(Length::Fixed(0.0)).into()
         };
-
-        row![
-            button(
-                container(
-                    image(start_icon(app_image_cache.clone(), start_state))
+        container(
+            row![
+                button(
+                    container(
+                        image(start_icon(app_image_cache.clone(), start_state))
+                            .width(Length::Fixed(24.0 * base_size))
+                            .height(Length::Fixed(24.0 * base_size)),
+                    ).width(Length::Fill).height(Length::Fill).align_y(Alignment::Center).align_x(Alignment::Center)
+                ).on_press(if start_state {Message::None} else {Message::OpenStartMenu})
+                    .height(Length::Fill)
+                    .width(Length::Fixed(42.0 * base_size))
+                    .padding(0.0)
+                    .style(transparent_button),
+                tasks.spacing(spacing),
+                space().width(Length::Fill),
+                button(row![
+                    tooltip(
+                        image(sound_icon(app_image_cache.clone(), system_volume, volume_muted))
+                            .width(Length::Fixed(24.0 * base_size))
+                            .height(Length::Fixed(24.0 * base_size)),
+                        container(column![
+                            text!("{}%", (system_volume * 100.0).round()),
+                        ]).style(container::rounded_box),
+                            tooltip::Position::FollowCursor
+                    ),
+                    tooltip(
+                        image(wifi_icon(app_image_cache.clone(),wifi_status.clone()))
                         .width(Length::Fixed(24.0 * base_size))
                         .height(Length::Fixed(24.0 * base_size)),
-                ).width(Length::Fill).height(Length::Fill).align_y(Alignment::Center).align_x(Alignment::Center)
-            ).on_press(if start_state {Message::None} else {Message::OpenStartMenu})
-                .height(Length::Fill)
-                .width(Length::Fixed(42.0 * base_size))
-                .padding(0.0)
-                .style(transparent_button),
-            tasks.spacing(spacing),
-            space().width(Length::Fill),
-            button(row![
-                tooltip(
-                    image(sound_icon(app_image_cache.clone(), system_volume, volume_muted))
-                        .width(Length::Fixed(24.0 * base_size))
-                        .height(Length::Fixed(24.0 * base_size)),
-                    container(column![
-                        text!("{}%", (system_volume * 100.0).round()),
-                    ]).style(container::rounded_box),
-                        tooltip::Position::FollowCursor
-                ),
-                tooltip(
-                    image(wifi_icon(app_image_cache.clone(),wifi_status.clone()))
-                    .width(Length::Fixed(24.0 * base_size))
-                    .height(Length::Fixed(24.0 * base_size)),
-                    container(column![
-                        text!("{}", match wifi_status.clone() {
-                            WifiStatus::Connected(ssid,_) => {
-                                ssid.to_string()
-                            }
-                            WifiStatus::Ethernet => {"Ethernet".to_string()}
-                            WifiStatus::Disconnected => {"Not Connected".to_string()}
-                        }),
-                    ]).style(container::rounded_box),
-                        tooltip::Position::FollowCursor
-                ),
-                battery_icon,
-                clock.padding(Padding::from([0.0,spacing]))
-            ].align_y(Alignment::Center))
-                .on_press(if panel_state {Message::None} else {Message::OpenPanelMenu})
-                .style(transparent_button),
-            space().width(Length::Fixed(spacing)),
-        ].spacing(spacing)
-            .width(Length::Fill)
-            .align_y(Alignment::Center)
-            .into()
+                        container(column![
+                            text!("{}", match wifi_status.clone() {
+                                WifiStatus::Connected(ssid,_) => {
+                                    ssid.to_string()
+                                }
+                                WifiStatus::Ethernet => {"Ethernet".to_string()}
+                                WifiStatus::Disconnected => {"Not Connected".to_string()}
+                            }),
+                        ]).style(container::rounded_box),
+                            tooltip::Position::FollowCursor
+                    ),
+                    battery_icon,
+                    clock.padding(Padding::from([0.0,spacing]))
+                ].align_y(Alignment::Center))
+                    .on_press(if panel_state {Message::None} else {Message::OpenPanelMenu})
+                    .style(transparent_button),
+                space().width(Length::Fixed(spacing)),
+            ].spacing(spacing)
+                    .width(Length::Fill)
+                    .align_y(Alignment::Center)
+        ).style(window_style).into()
+        
     }
 }

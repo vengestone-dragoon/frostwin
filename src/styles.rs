@@ -1,5 +1,6 @@
-use iced::widget::{button, slider};
+use iced::widget::{button, container, slider};
 use iced::{border, Background, Border, Color, Shadow, Theme, Vector};
+use iced::border::Radius;
 
 // This function returns a custom style for our button
 pub fn transparent_button(_theme: &Theme, status: button::Status) -> button::Style {
@@ -100,4 +101,27 @@ pub fn my_slider(_theme: &Theme, status: slider::Status) -> slider::Style {
 
 pub fn context_menu_button(theme: &Theme, _status: button::Status) -> button::Style {
     transparent_button(theme, button::Status::Active)
+}
+
+pub fn window_style(theme: &Theme) -> container::Style {
+    container::Style {
+        text_color: theme.palette().text.into(),
+        background: Background::Color(theme.palette().background).into(),
+        border: Border {
+            color: Color::from_rgba(
+                (theme.palette().background.r - 0.3).max(0.0),
+                (theme.palette().background.g - 0.3).max(0.0),
+                (theme.palette().background.b - 0.3).max(0.0),
+                (theme.palette().background.a - 0.3).max(0.0),
+            ),
+            width: 2.0,
+            radius: Radius::new(8),
+        },
+        shadow: Shadow {
+            color: Default::default(),
+            offset: Default::default(),
+            blur_radius: 0.0,
+        },
+        snap: true,
+    }
 }

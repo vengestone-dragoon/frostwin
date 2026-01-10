@@ -4,11 +4,11 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use iced::{window, Alignment, Element, Length, Pixels, Point, Size, Task};
 use iced::advanced::image::Handle;
-use iced::widget::{row, text, column, slider, button, space, image};
+use iced::widget::{row, text, column, slider, button, space, image, container};
 use iced::widget::text::Wrapping;
 use crate::Message;
 use crate::raw_icons::{battery_icon, sound_icon, wifi_icon};
-use crate::styles::{my_slider, transparent_button};
+use crate::styles::{my_slider, transparent_button, window_style};
 use crate::sys_util::WifiStatus;
 
 #[derive(Debug, Clone)]
@@ -69,40 +69,42 @@ impl PanelMenu {
         } else {
             space().height(Length::Fixed(0.0)).into()
         };
-        row![
-            column![
-                row![
-                    button(
-                    image(sound_icon(app_image_cache.clone(),system_volume, volume_muted)).width(Length::Fill).height(Length::Fill),
-                    ).width(Length::Fixed(36.0 * base_size))
-                    .height(Length::Fixed(36.0 * base_size))
-                    .style(transparent_button)
-                    .padding(0.0)
-                    .on_press(Message::VolumeMute),
-                    slider(
-                        RangeInclusive::new(0.0, 1.0),
-                        system_volume,
-                        |value|
-                        Message::VolumeChange(value)
-                    ).width(Length::Fill).step(0.01)
-                    .height(Pixels(36.0 * base_size))
-                    .style(move |theme,status| my_slider(theme,status)),
-                    text!("{}%", (system_volume * 100.0).round()).width(Length::Fixed(text_height * 2.0)),
-                ].align_y(Alignment::Center).spacing(spacing),
-            ].width(Length::FillPortion(4)).height(Length::Fill).spacing(spacing),
-            column![
-                battery_icon,
-                image(wifi_icon(app_image_cache.clone(),wifi_status.clone()))
-                            .width(Length::Fixed(36.0 * base_size))
-                            .height(Length::Fixed(36.0 * base_size)),
-                text!("{}", match wifi_status.clone() {
-                    WifiStatus::Connected(ssid,_) => {
-                        ssid.to_string()
-                    }
-                    WifiStatus::Ethernet => {"Ethernet".to_string()}
-                    WifiStatus::Disconnected => {"Not Connected".to_string()}
-                }).wrapping(Wrapping::WordOrGlyph).align_x(Alignment::Center)
-            ].width(Length::FillPortion(1)).height(Length::Fill).align_x(Alignment::Center).spacing(spacing),
-        ].height(Length::Fill).width(Length::Fill).padding(spacing).spacing(spacing).into()
+        container(
+            row![
+                column![
+                    row![
+                        button(
+                        image(sound_icon(app_image_cache.clone(),system_volume, volume_muted)).width(Length::Fill).height(Length::Fill),
+                        ).width(Length::Fixed(36.0 * base_size))
+                        .height(Length::Fixed(36.0 * base_size))
+                        .style(transparent_button)
+                        .padding(0.0)
+                        .on_press(Message::VolumeMute),
+                        slider(
+                            RangeInclusive::new(0.0, 1.0),
+                            system_volume,
+                            |value|
+                            Message::VolumeChange(value)
+                        ).width(Length::Fill).step(0.01)
+                        .height(Pixels(36.0 * base_size))
+                        .style(move |theme,status| my_slider(theme,status)),
+                        text!("{}%", (system_volume * 100.0).round()).width(Length::Fixed(text_height * 2.0)),
+                    ].align_y(Alignment::Center).spacing(spacing),
+                ].width(Length::FillPortion(4)).height(Length::Fill).spacing(spacing),
+                column![
+                    battery_icon,
+                    image(wifi_icon(app_image_cache.clone(),wifi_status.clone()))
+                                .width(Length::Fixed(36.0 * base_size))
+                                .height(Length::Fixed(36.0 * base_size)),
+                    text!("{}", match wifi_status.clone() {
+                        WifiStatus::Connected(ssid,_) => {
+                            ssid.to_string()
+                        }
+                        WifiStatus::Ethernet => {"Ethernet".to_string()}
+                        WifiStatus::Disconnected => {"Not Connected".to_string()}
+                    }).wrapping(Wrapping::WordOrGlyph).align_x(Alignment::Center)
+                ].width(Length::FillPortion(1)).height(Length::Fill).align_x(Alignment::Center).spacing(spacing),
+            ].height(Length::Fill).width(Length::Fill).padding(spacing).spacing(spacing)
+        ).style(window_style).into()
     }
 }
