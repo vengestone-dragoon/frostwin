@@ -18,6 +18,7 @@ My current next plans for this project would be:
 - fix desktop in front of taskbar issue
 - add settings menu
 - add context menus / context menu window
+- add support for MS Apps in Start Menu
 
 ### Contributing ###
 I am open to further development, and i know that Frostwin is still missing features that i want it to have.
