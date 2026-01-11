@@ -12,9 +12,9 @@ My current next plans for this project would be:
 - adding system tray icons
 - adding display brightness control
 - adding wifi network connection management
-- adding costomization settings
+- adding customization settings
 - adding desktop icons
-- adding desktop costomization
+- adding desktop customization
 - fix desktop in front of taskbar issue
 - add settings menu
 - add context menus / context menu window
