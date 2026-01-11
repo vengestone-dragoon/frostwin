@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   width="100"
+   height="100"
+   viewBox="0 0 100 100"
+   version="1.1"
+   xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .stroke {
+      stroke: #ccccccff;
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: #ccccccff;
+    }
+  </style>
+  <path d="
+    M 38.61 7.49
+    A 44 44 0 0 1 61.38 7.49
+    L 57.72 26.22
+    A 44 44 0 0 1 68.57 33.27
+    L 81.11 18.88
+    A 44 44 0 0 1 92.50 38.61
+    L 74.45 44.80
+    A 44 44 0 0 1 74.45 55.19
+    L 92.50 61.38
+    A 44 44 0 0 1 81.11 81.11
+    L 68.57 66.72
+    A 44 44 0 0 1 57.72 73.77
+
+    L 61.38 92.50
+    A 44 44 0 0 1 38.61 92.50
+    L 42.27 73.77
+    A 44 44 0 0 1 31.42 66.72
+    L 18.88 81.11
+    A 44 44 0 0 1 7.49 61.38
+    L 25.54 55.19
+    A 44 44 0 0 1 25.54 44.80
+    L 7.49 38.61
+    A 44 44 0 0 1 18.88 18.88
+    L 31.42 33.27
+    A 44 44 0 0 1 42.27 26.22
+    Z
+  " class="stroke"></path>
+</svg>

@@ -209,6 +209,7 @@ pub const SHUTDOWN_ICON: &'static [u8] = include_bytes!("images/icons/power/Shut
 pub const EMPTY_APP_ICON: &'static [u8] = include_bytes!("images/icons/EmptyApp.png");
 pub const TREE_DOT_ICON: &'static [u8] = include_bytes!("images/icons/TreeDot.png");
 pub const FOLDER_ICON: &'static [u8] = include_bytes!("images/icons/Folder.png");
+pub const SETTINGS_ICON: &'static [u8] = include_bytes!("images/icons/Settings.png");
 
 pub fn unpack_missing_icons(path: PathBuf) -> std::io::Result<()> {
     let assets: &[(&str, &[u8])] = &[
@@ -255,7 +256,8 @@ pub fn unpack_missing_icons(path: PathBuf) -> std::io::Result<()> {
         ("icons/power/Cancel.png", CANCEL_ICON),
         ("icons/Folder.png", FOLDER_ICON),
         ("icons/TreeDot.png", TREE_DOT_ICON),
-        ("icons/EmptyApp.png", EMPTY_APP_ICON)
+        ("icons/EmptyApp.png", EMPTY_APP_ICON),
+        ("icons/Settings.png", SETTINGS_ICON),
     ];
 
     for (rel_path, data) in assets {

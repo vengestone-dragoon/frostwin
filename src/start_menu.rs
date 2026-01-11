@@ -10,6 +10,7 @@ use iced::{window, Alignment, Color, ContentFit, Element, Length, Padding, Point
 use iced_aw::context_menu::ContextMenu;
 use serde_json::{from_str, to_string_pretty};
 use std::collections::BTreeMap;
+use std::ffi::OsString;
 use std::path::PathBuf;
 use std::process::Command;
 use std::sync::{Arc, Mutex};
@@ -285,6 +286,7 @@ impl StartMenu {
             restart_button,
             shutdown_button,
             empty_app,
+            settings_button,
         ) = match (app_image_cache.lock(),data_dir()) {
             (Ok(app_image_lock),Some(data_dir)) => {
                 let data_folder = data_dir.join("Frostwin");
@@ -294,6 +296,7 @@ impl StartMenu {
                     app_image_lock.get(&data_folder.join("icons/power/Restart.png")).unwrap_or(&error_handle).clone(),
                     app_image_lock.get(&data_folder.join("icons/power/Shutdown.png")).unwrap_or(&error_handle).clone(),
                     app_image_lock.get(&data_folder.join("icons/EmptyApp.png")).unwrap_or(&error_handle).clone(),
+                    app_image_lock.get(&data_folder.join("icons/Settings.png")).unwrap_or(&error_handle).clone(),
                 )
             }
             (Err(error),_) => {
@@ -304,12 +307,14 @@ impl StartMenu {
                     error_handle.clone(),
                     error_handle.clone(),
                     error_handle.clone(),
+                    error_handle.clone(),
                 )
             }
             (_,None) => {
                 eprintln!("Error getting data directory");
                 let error_handle = Handle::from_rgba(1,1,vec![255u8,0u8,0u8,255u8]);
                 (
+                    error_handle.clone(),
                     error_handle.clone(),
                     error_handle.clone(),
                     error_handle.clone(),
@@ -355,7 +360,7 @@ impl StartMenu {
                                     .spacing(0.0)
                                     .padding(spacing)
                             ).style(transparent_button)
-                            .on_press(Message::StartMenu(StartMessage::ItemMessage(StartItemMessage::Launch(path.clone()))));
+                            .on_press(Message::StartMenu(StartMessage::ItemMessage(StartItemMessage::Launch(path.clone().into_os_string()))));
                             let context_menu = ContextMenu::new(
                                 tile_button,
                                 || {
@@ -418,6 +423,13 @@ impl StartMenu {
                 rule::horizontal(spacing),
                 row![
                     space().width(Length::Fixed(text_height)),
+                    button(
+                        image(settings_button)
+                    ).height(Length::Fixed(text_height))
+                    .width(Length::Fixed(text_height))
+                    .padding(0.0)
+                    .style(transparent_button)
+                    .on_press(Message::StartMenu(StartMessage::ItemMessage(StartItemMessage::Launch("ms-settings:home".into())))),
                     space().width(Length::Fill),
                     button(
                         image(lock_button)
@@ -454,7 +466,7 @@ impl StartMenu {
 #[derive(Debug, Clone)]
 pub enum StartItemMessage {
     Toggle(Vec<String>),
-    Launch(PathBuf),
+    Launch(OsString),
 }
 
 struct StartItem {
@@ -635,7 +647,7 @@ impl StartItem {
                         space().width(Length::Fixed(spacing)),
                         text!("{}",self.name).size(text_half_height).height(Length::Fixed(text_half_height)).align_y(Alignment::Center)
                     ].align_y(Alignment::Center)
-                ).on_press(Message::StartMenu(StartMessage::ItemMessage(StartItemMessage::Launch(self.path.clone()))))
+                ).on_press(Message::StartMenu(StartMessage::ItemMessage(StartItemMessage::Launch(self.path.clone().into_os_string()))))
                     .style(transparent_button),
                 || {
                     container(
